@@ -1,0 +1,328 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard de Casos RJ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand">
+          <h2>Enforce RJ</h2>
+          <p>Central Operacional</p>
+        </div>
+
+        <nav class="side-nav">
+          <button class="nav-item active" data-view="view-main">Tela principal</button>
+          <button class="nav-item" data-view="view-phases">Dashboard de fases</button>
+          <button class="nav-item" data-view="view-agc">Data AGC</button>
+        </nav>
+      </aside>
+
+      <section class="content">
+        <header class="topbar">
+          <div class="topbar-row">
+            <div class="topbar-title">
+              <button id="toggle-sidebar" class="icon-btn" aria-label="Abrir ou fechar menu">☰</button>
+              <h1>Central de Casos - Credito Estressado</h1>
+            </div>
+            <p id="ref-date"></p>
+          </div>
+          <p>Visao consolidada para PM, AM e pendencias operacionais</p>
+        </header>
+
+        <main class="container">
+          <section id="view-main" class="view active">
+            <section id="kpi-grid" class="kpi-grid"></section>
+
+            <section class="panel filters-panel">
+              <div class="panel-head">
+                <h2>Filtros</h2>
+                <div class="filters-head-actions">
+                  <span id="active-filters" class="active-filters">0 filtros ativos</span>
+                  <button class="btn" id="open-agc-calendar-modal">Calendario AGC</button>
+                  <button class="btn btn-clear" id="clear-filters">Limpar</button>
+                </div>
+              </div>
+              <div class="filters-grid">
+                <label class="f-item"><input type="checkbox" id="filter-missing-docs" /> Documento faltando</label>
+                <label class="f-item"><input type="checkbox" id="filter-missing-agc" /> Sem data AGC</label>
+                <label class="f-item"><input type="checkbox" id="filter-delayed-am" /> AM atrasado</label>
+
+                <label class="f-item">PM
+                  <select id="filter-pm">
+                    <option value="">Todos</option>
+                  </select>
+                </label>
+
+                <label class="f-item">Carteira
+                  <select id="filter-carteira">
+                    <option value="">Todas</option>
+                  </select>
+                </label>
+
+                <label class="f-item">Fase RJ
+                  <select id="filter-rj-phase">
+                    <option value="">Todas</option>
+                  </select>
+                </label>
+
+                <label class="f-item">Classe
+                  <select id="filter-class">
+                    <option value="">Todas</option>
+                  </select>
+                </label>
+                <label class="f-item">Status
+                  <select id="filter-status">
+                    <option value="">Todos</option>
+                  </select>
+                </label>
+                <label class="f-item">Investigacao atualizada
+                  <select id="filter-investigacao">
+                    <option value="">Todos</option>
+                    <option value="SIM">SIM</option>
+                    <option value="NAO">NAO</option>
+                  </select>
+                </label>
+                <label class="f-item">Docs obrigatorios
+                  <select id="filter-docs-ok">
+                    <option value="">Todos</option>
+                    <option value="V">V</option>
+                    <option value="X">X</option>
+                  </select>
+                </label>
+                <label class="f-item">Data AGC atualizada
+                  <select id="filter-agc-ok">
+                    <option value="">Todos</option>
+                    <option value="OK">OK</option>
+                    <option value="N OK">N OK</option>
+                  </select>
+                </label>
+                <label class="f-item">Janela AGC
+                  <select id="filter-agc-window">
+                    <option value="">Todas</option>
+                    <option value="next_30">Proximos 30 dias</option>
+                    <option value="next_month">Proximo mes</option>
+                    <option value="past">Data passada</option>
+                    <option value="none">Sem AGC</option>
+                  </select>
+                </label>
+
+                <label class="f-item">Faixa de valor
+                  <select id="filter-ticket">
+                    <option value="">Todas</option>
+                    <option value="low">Ate R$ 70MM</option>
+                    <option value="mid">R$ 70MM a R$ 150MM</option>
+                    <option value="high">Acima de R$ 150MM</option>
+                  </select>
+                </label>
+
+                <label class="f-item">Busca
+                  <input id="filter-search" type="text" placeholder="Case ID ou nome" />
+                </label>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Casos</h2>
+                <span id="result-count"></span>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Case_ID</th>
+                      <th>Name</th>
+                      <th>PM</th>
+                      <th>Carteira</th>
+                      <th>Valor Credito</th>
+                      <th>Status</th>
+                      <th>AM Update</th>
+                      <th>Investigacao atualizada</th>
+                      <th>Docs obrigatorios</th>
+                      <th>Data AGC atualizada</th>
+                      <th>AGC</th>
+                      <th>Pendencias</th>
+                      <th>Acao</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cases-body"></tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+
+          <section id="view-phases" class="view">
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Pipeline por Fase RJ</h2>
+              </div>
+              <div id="phases-board" class="phases-board"></div>
+            </section>
+          </section>
+
+          <section id="view-agc" class="view">
+            <section class="panel">
+              <div class="panel-head">
+                <h2>Visao AGCs dos Casos</h2>
+                <div class="agc-mode-toggle">
+                  <button class="btn agc-mode-btn active" data-agc-mode="timeline">Timeline</button>
+                  <button class="btn agc-mode-btn" data-agc-mode="calendar">Calendario</button>
+                </div>
+              </div>
+              <div class="agc-summary">
+                <div id="agc-next-count" class="agc-stat"></div>
+                <div id="agc-missing-count" class="agc-stat"></div>
+              </div>
+              <div id="agc-timeline" class="agc-timeline"></div>
+              <div id="agc-calendar" class="agc-calendar hidden"></div>
+            </section>
+          </section>
+        </main>
+      </section>
+    </div>
+
+    <div id="case-modal" class="modal hidden">
+      <div class="modal-content">
+        <button id="close-modal" class="close-btn" aria-label="Fechar modal">x</button>
+        <div class="modal-header">
+          <h3 id="modal-title"></h3>
+          <div id="modal-subtitle" class="modal-subtitle"></div>
+        </div>
+
+        <section class="modal-section">
+          <h4>Resumo Executivo</h4>
+          <div id="modal-kpis" class="modal-kpis"></div>
+        </section>
+
+        <section class="modal-section">
+          <h4>Detalhes Operacionais e Financeiros</h4>
+          <div id="modal-grid" class="modal-grid"></div>
+        </section>
+
+        <section class="modal-section">
+          <h4>Documentos Faltando</h4>
+          <ul id="modal-docs" class="doc-list"></ul>
+        </section>
+      </div>
+    </div>
+
+    <div id="docs-modal" class="modal hidden">
+      <div class="modal-content docs-modal-content">
+        <button id="close-docs-modal" class="close-btn" aria-label="Fechar modal">x</button>
+        <div class="modal-header">
+          <h3 id="docs-modal-title"></h3>
+          <div class="modal-subtitle">Documentos presentes no caso</div>
+        </div>
+        <div id="docs-list" class="docs-list"></div>
+      </div>
+    </div>
+
+    <div id="edit-modal" class="modal hidden">
+      <div class="modal-content docs-modal-content">
+        <button id="close-edit-modal" class="close-btn" aria-label="Fechar modal">x</button>
+        <div class="modal-header">
+          <h3 id="edit-modal-title"></h3>
+          <div class="modal-subtitle">Editar informacoes principais do caso</div>
+        </div>
+        <form id="edit-form" class="form-grid">
+          <label class="f-item">Nome
+            <input id="edit-name" type="text" />
+          </label>
+          <label class="f-item">PM
+            <input id="edit-pm" type="text" />
+          </label>
+          <label class="f-item">Carteira
+            <input id="edit-carteira" type="text" />
+          </label>
+          <label class="f-item">Fase RJ
+            <select id="edit-rj-phase">
+              <option value="Assembleia convocada">Assembleia convocada</option>
+              <option value="Verificacao de creditos">Verificacao de creditos</option>
+              <option value="Plano homologado">Plano homologado</option>
+              <option value="Cumprimento de obrigacoes">Cumprimento de obrigacoes</option>
+              <option value="Impugnacoes">Impugnacoes</option>
+              <option value="Encerramento">Encerramento</option>
+            </select>
+          </label>
+          <label class="f-item">Status
+            <select id="edit-status">
+              <option value="Aguardando AGC">Aguardando AGC</option>
+              <option value="Em diligencia">Em diligencia</option>
+              <option value="Execucao de plano">Execucao de plano</option>
+              <option value="Monitoring">Monitoring</option>
+              <option value="Contencioso">Contencioso</option>
+              <option value="Fechamento">Fechamento</option>
+            </select>
+          </label>
+          <label class="f-item">AM Update
+            <input id="edit-am-update" type="text" />
+          </label>
+          <label class="f-item">Data AGC (YYYY-MM-DD)
+            <input id="edit-agc-date" type="text" />
+          </label>
+          <label class="f-item">Valor Credito
+            <input id="edit-valor" type="number" min="0" step="1" />
+          </label>
+          <div>
+            <button class="btn" type="submit">Salvar edicao</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="upload-modal" class="modal hidden">
+      <div class="modal-content docs-modal-content">
+        <button id="close-upload-modal" class="close-btn" aria-label="Fechar modal">x</button>
+        <div class="modal-header">
+          <h3 id="upload-modal-title"></h3>
+          <div class="modal-subtitle">Upload de documento para o caso</div>
+        </div>
+        <form id="upload-form" class="form-grid">
+          <label class="f-item">Tipo do documento
+            <select id="upload-doc-type">
+              <option value="PRC">PRC</option>
+              <option value="QGC">QGC</option>
+              <option value="RMA">RMA</option>
+              <option value="IDPJ">IDPJ</option>
+              <option value="PRECIFICACAO">PRECIFICACAO</option>
+              <option value="PPT">PPT</option>
+              <option value="OUTRO">OUTRO</option>
+            </select>
+          </label>
+          <label class="f-item">Arquivo
+            <input id="upload-file" type="file" />
+          </label>
+          <div>
+            <button class="btn" type="submit">Enviar documento</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="agc-calendar-modal" class="modal hidden">
+      <div class="modal-content docs-modal-content">
+        <button id="close-agc-calendar-modal" class="close-btn" aria-label="Fechar modal">x</button>
+        <div class="modal-header">
+          <h3>Calendario de AGCs</h3>
+          <div class="modal-subtitle">Dias com AGC aparecem com ponto vermelho</div>
+        </div>
+        <div class="calendar-nav">
+          <button id="agc-cal-prev" class="btn">Mes anterior</button>
+          <strong id="agc-cal-title"></strong>
+          <button id="agc-cal-next" class="btn">Proximo mes</button>
+        </div>
+        <div id="agc-cal-grid" class="agc-cal-grid"></div>
+        <div>
+          <h4>Casos no dia</h4>
+          <ul id="agc-cal-day-list" class="doc-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+</html>
