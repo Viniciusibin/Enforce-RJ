@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BTG / Enforce &mdash; Portfolio de Im&oacute;veis</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #060d1a;
+      --surface: #0e1a2d;
+      --surface2: #152238;
+      --border: #1e3052;
+      --primary: #3b82f6;
+      --primary-glow: rgba(59,130,246,.25);
+      --accent: #06b6d4;
+      --green: #10b981;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --purple: #a855f7;
+      --text: #f1f5f9;
+      --text-muted: #64748b;
+      --text-soft: #94a3b8;
+      --radius: 14px;
+      --shadow: 0 4px 24px rgba(0,0,0,.4);
+    }
+
+    body {
+      background: var(--bg);
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── TOP NAV ────────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, #0a1628 0%, #0e2040 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      backdrop-filter: blur(12px);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: -0.5px;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .logo-text { line-height: 1.2; }
+    .logo-title { font-size: 16px; font-weight: 700; color: var(--text); }
+    .logo-sub { font-size: 11px; color: var(--text-muted); letter-spacing: .05em; text-transform: uppercase; }
+    .header-meta {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .live-badge {
+      background: rgba(16,185,129,.15);
+      border: 1px solid rgba(16,185,129,.3);
+      color: var(--green);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .4; transform: scale(.7); }
+    }
+    .header-date {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ── LAYOUT ─────────────────────────────────────── */
+    main {
+      padding: 28px 32px 48px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── KPI CARDS ──────────────────────────────────── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      position: relative;
+      overflow: hidden;
+      transition: transform .2s, border-color .2s;
+    }
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--primary);
+    }
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .kpi-card.blue::before  { background: linear-gradient(90deg, var(--primary), var(--accent)); }
+    .kpi-card.green::before { background: linear-gradient(90deg, var(--green), #34d399); }
+    .kpi-card.amber::before { background: linear-gradient(90deg, var(--amber), #fcd34d); }
+    .kpi-card.red::before   { background: linear-gradient(90deg, var(--red), #f87171); }
+    .kpi-card.purple::before { background: linear-gradient(90deg, var(--purple), #c084fc); }
+    .kpi-card.cyan::before  { background: linear-gradient(90deg, var(--accent), #67e8f9); }
+
+    .kpi-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 14px;
+    }
+    .kpi-card.blue .kpi-icon   { background: rgba(59,130,246,.15); }
+    .kpi-card.green .kpi-icon  { background: rgba(16,185,129,.15); }
+    .kpi-card.amber .kpi-icon  { background: rgba(245,158,11,.15); }
+    .kpi-card.red .kpi-icon    { background: rgba(239,68,68,.15); }
+    .kpi-card.purple .kpi-icon { background: rgba(168,85,247,.15); }
+    .kpi-card.cyan .kpi-icon   { background: rgba(6,182,212,.15); }
+
+    .kpi-value {
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 6px;
+      letter-spacing: -0.5px;
+    }
+    .kpi-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--text-soft);
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .kpi-badge {
+      background: rgba(16,185,129,.15);
+      color: var(--green);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    /* ── TWO-COL LAYOUT ─────────────────────────────── */
+    .row-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    .row-3col {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    .row-map-chart {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-badge {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    /* ── MAP ────────────────────────────────────────── */
+    #map {
+      height: 420px;
+      border-radius: 10px;
+      z-index: 1;
+    }
+    .leaflet-popup-content-wrapper {
+      background: var(--surface2) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 10px !important;
+      box-shadow: 0 8px 32px rgba(0,0,0,.5) !important;
+      color: var(--text) !important;
+    }
+    .leaflet-popup-tip { background: var(--surface2) !important; }
+    .popup-title { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    .popup-row { font-size: 11px; color: var(--text-soft); margin-bottom: 3px; display: flex; justify-content: space-between; gap: 12px; }
+    .popup-val { color: var(--text); font-weight: 500; }
+    .popup-chip {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+
+    /* ── CHART CONTAINERS ───────────────────────────── */
+    .chart-wrap {
+      position: relative;
+      height: 280px;
+    }
+    .chart-wrap-sm {
+      position: relative;
+      height: 220px;
+    }
+
+    /* ── LEGEND PILLS ───────────────────────────────── */
+    .legend-list {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── VALUE BAR ──────────────────────────────────── */
+    .value-bar-list { display: flex; flex-direction: column; gap: 10px; }
+    .value-bar-item {}
+    .value-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-soft);
+      margin-bottom: 5px;
+    }
+    .value-bar-label span:last-child { color: var(--text); font-weight: 600; }
+    .value-bar-track {
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .value-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 1s ease;
+    }
+
+    /* ── TABLE ──────────────────────────────────────── */
+    .table-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .search-input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 14px 9px 38px;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      width: 240px;
+      transition: border-color .2s;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: 12px center;
+    }
+    .search-input:focus { border-color: var(--primary); }
+    .filter-select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 14px;
+      font-size: 12px;
+      color: var(--text-soft);
+      outline: none;
+      cursor: pointer;
+      transition: border-color .2s;
+    }
+    .filter-select:focus { border-color: var(--primary); }
+    .filter-select option { background: var(--surface); }
+    .table-count {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+    .data-table th {
+      text-align: left;
+      padding: 10px 14px;
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+    .data-table th:hover { color: var(--text); }
+    .data-table th .sort-icon { opacity: .4; margin-left: 4px; }
+    .data-table th.sorted .sort-icon { opacity: 1; color: var(--primary); }
+    .data-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid rgba(30,48,82,.6);
+      color: var(--text-soft);
+      white-space: nowrap;
+    }
+    .data-table tr:hover td { background: rgba(59,130,246,.05); color: var(--text); }
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 5px;
+      font-size: 10.5px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .chip-green  { background: rgba(16,185,129,.15); color: #34d399; border: 1px solid rgba(16,185,129,.25); }
+    .chip-amber  { background: rgba(245,158,11,.15);  color: #fcd34d; border: 1px solid rgba(245,158,11,.25); }
+    .chip-red    { background: rgba(239,68,68,.15);   color: #f87171; border: 1px solid rgba(239,68,68,.25); }
+    .chip-blue   { background: rgba(59,130,246,.15);  color: #93c5fd; border: 1px solid rgba(59,130,246,.25); }
+    .chip-gray   { background: rgba(100,116,139,.15); color: #94a3b8; border: 1px solid rgba(100,116,139,.25); }
+    .chip-purple { background: rgba(168,85,247,.15);  color: #d8b4fe; border: 1px solid rgba(168,85,247,.25); }
+    .chip-cyan   { background: rgba(6,182,212,.15);   color: #67e8f9; border: 1px solid rgba(6,182,212,.25); }
+
+    .num-val { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--text); }
+    .num-val.large { color: var(--green); }
+
+    /* ── PAGINATION ─────────────────────────────────── */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 18px;
+    }
+    .page-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-soft);
+      border-radius: 7px;
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    .page-btn:hover, .page-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .page-btn:disabled { opacity: .35; pointer-events: none; }
+
+    /* ── PROGRESS RINGS ─────────────────────────────── */
+    .ring-container {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .ring-wrap { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
+    .ring-wrap svg { transform: rotate(-90deg); }
+    .ring-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .ring-pct { font-size: 16px; font-weight: 800; }
+    .ring-sub { font-size: 9px; color: var(--text-muted); }
+
+    /* ── STAT PILL ROW ──────────────────────────────── */
+    .stat-pills { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+    .stat-pill {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .stat-pill-label { font-size: 12px; color: var(--text-soft); display: flex; align-items: center; gap: 8px; }
+    .stat-pill-label .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .stat-pill-value { font-size: 14px; font-weight: 700; }
+
+    /* ── RESPONSIVE ─────────────────────────────────── */
+    @media (max-width: 1100px) {
+      .row-map-chart, .row-2col, .row-3col {
+        grid-template-columns: 1fr;
+      }
+      #map { height: 340px; }
+    }
+    @media (max-width: 680px) {
+      main { padding: 16px; }
+      header { padding: 0 16px; }
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* ── SCROLLBAR ──────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    .table-scroll { overflow-x: auto; }
+
+    /* ── COMPARISON BAR ─────────────────────────────── */
+    .compare-row {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .cmp-item {}
+    .cmp-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .cmp-city { font-size: 12px; color: var(--text); font-weight: 500; }
+    .cmp-values { font-size: 11px; color: var(--text-muted); }
+    .cmp-bars { display: flex; height: 7px; border-radius: 4px; overflow: hidden; gap: 2px; }
+    .cmp-vm { background: var(--primary); }
+    .cmp-vf { background: var(--accent); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-badge">BE</div>
+    <div class="logo-text">
+      <div class="logo-title">BTG / Enforce</div>
+      <div class="logo-sub">Portfolio de Im&oacute;veis &mdash; Dashboard Anal&iacute;tico</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    <span class="live-badge"><span class="live-dot"></span>38 ativos</span>
+    <span class="header-date" id="headerDate"></span>
+  </div>
+</header>
+
+<main>
+  <!-- KPI CARDS -->
+  <div class="section-title">Vis&atilde;o Geral do Portfolio</div>
+  <div class="kpi-grid">
+    <div class="kpi-card blue">
+      <div class="kpi-icon">🏛️</div>
+      <div class="kpi-value" id="kpiTotal">38</div>
+      <div class="kpi-label">Total de Im&oacute;veis</div>
+      <div class="kpi-sub"><span class="kpi-badge">BTG/Enforce</span> &nbsp;portfolio ativo</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-icon">💰</div>
+      <div class="kpi-value" id="kpiVM">—</div>
+      <div class="kpi-label">Valor de Mercado Total (VM)</div>
+      <div class="kpi-sub">Soma VM Enforce</div>
+    </div>
+    <div class="kpi-card cyan">
+      <div class="kpi-icon">📉</div>
+      <div class="kpi-value" id="kpiVF">—</div>
+      <div class="kpi-label">Venda For&ccedil;ada Total (VF)</div>
+      <div class="kpi-sub">Soma VF Enforce</div>
+    </div>
+    <div class="kpi-card amber">
+      <div class="kpi-icon">📍</div>
+      <div class="kpi-value" id="kpiLoc">—</div>
+      <div class="kpi-label">Im&oacute;veis Localizados</div>
+      <div class="kpi-sub">de 38 no portfolio</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-icon">✅</div>
+      <div class="kpi-value" id="kpiConc">—</div>
+      <div class="kpi-label">Tarefas Conclu&iacute;das</div>
+      <div class="kpi-sub">status da tarefa</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-icon">🌳</div>
+      <div class="kpi-value" id="kpiRural">—</div>
+      <div class="kpi-label">Im&oacute;veis Rurais</div>
+      <div class="kpi-sub">vs. <span id="kpiUrbano">—</span> urbanos</div>
+    </div>
+  </div>
+
+  <!-- MAP + DONUT -->
+  <div class="section-title">Distribui&ccedil;&atilde;o Geogr&aacute;fica</div>
+  <div class="row-map-chart">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">🗺️ Localiza&ccedil;&atilde;o dos Im&oacute;veis no Brasil</span>
+        <span class="card-badge" id="mapCount">—</span>
+      </div>
+      <div id="map"></div>
+      <div style="margin-top:12px; display:flex; gap:16px; flex-wrap:wrap;">
+        <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>VM &gt; R$10M</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>VM R$1M–10M</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>VM &lt; R$1M</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#64748b"></div>Sem valor</div>
+      </div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:20px;">
+      <div class="card" style="flex:1">
+        <div class="card-header">
+          <span class="card-title">🏷️ Por Tipologia</span>
+          <span class="card-badge" id="tipCount">—</span>
+        </div>
+        <div id="tipologiaList" style="display:flex;flex-direction:column;gap:7px;"></div>
+      </div>
+      <div class="card" style="flex:1">
+        <div class="card-header">
+          <span class="card-title">🔍 Status de Localiza&ccedil;&atilde;o</span>
+        </div>
+        <div class="ring-container">
+          <div class="ring-wrap">
+            <svg width="80" height="80" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="32" fill="none" stroke="#1e3052" stroke-width="8"/>
+              <circle cx="40" cy="40" r="32" fill="none" stroke="#10b981" stroke-width="8"
+                stroke-dasharray="200.96" stroke-dashoffset="0" id="ringLoc" stroke-linecap="round"/>
+            </svg>
+            <div class="ring-label">
+              <div class="ring-pct" id="ringPct" style="color:var(--green)">—%</div>
+              <div class="ring-sub">Loc.</div>
+            </div>
+          </div>
+          <div class="stat-pills">
+            <div class="stat-pill">
+              <div class="stat-pill-label"><div class="dot" style="background:#10b981"></div>Localizado</div>
+              <div class="stat-pill-value" id="statLoc" style="color:#34d399">—</div>
+            </div>
+            <div class="stat-pill">
+              <div class="stat-pill-label"><div class="dot" style="background:#f59e0b"></div>Parcialmente</div>
+              <div class="stat-pill-value" id="statPart" style="color:#fcd34d">—</div>
+            </div>
+            <div class="stat-pill">
+              <div class="stat-pill-label"><div class="dot" style="background:#ef4444"></div>N&atilde;o Localizado</div>
+              <div class="stat-pill-value" id="statNLoc" style="color:#f87171">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW -->
+  <div class="section-title">An&aacute;lise de Valores</div>
+  <div class="row-2col">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📊 Top 10 por VM</span>
+        <span class="card-badge">R$</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="chartTopVM"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">🏙️ Im&oacute;veis por Estado</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="chartEstados"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- VM vs VF comparison bars -->
+  <div class="row-2col">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📈 VM vs. VF &mdash; Top 12 Im&oacute;veis</span>
+        <div style="display:flex;gap:12px;font-size:11px;align-items:center">
+          <span style="display:flex;align-items:center;gap:4px;color:var(--text-soft)"><div style="width:10px;height:4px;background:var(--primary);border-radius:2px"></div>VM</span>
+          <span style="display:flex;align-items:center;gap:4px;color:var(--text-soft)"><div style="width:10px;height:4px;background:var(--accent);border-radius:2px"></div>VF</span>
+        </div>
+      </div>
+      <div class="compare-row" id="compareList"></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">🕒 Im&oacute;veis por Tipo</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="chartTipoRuralUrbano"></canvas>
+      </div>
+      <div style="margin-top:16px;">
+        <div class="value-bar-list" id="valueBarList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="section-title">Listagem Detalhada dos Im&oacute;veis</div>
+  <div class="card">
+    <div class="table-toolbar">
+      <input class="search-input" type="text" id="searchInput" placeholder="Buscar por cidade, tipologia, mat..." />
+      <select class="filter-select" id="filterEstado">
+        <option value="">Todos os estados</option>
+      </select>
+      <select class="filter-select" id="filterTipo">
+        <option value="">Urbano &amp; Rural</option>
+        <option value="Urbano">Urbano</option>
+        <option value="Rural">Rural</option>
+      </select>
+      <select class="filter-select" id="filterStatus">
+        <option value="">Todos os status</option>
+        <option value="Conclu&iacute;da">Conclu&iacute;da</option>
+      </select>
+      <span class="table-count" id="tableCount"></span>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table" id="dataTable">
+        <thead>
+          <tr>
+            <th data-col="mat">Mat. <span class="sort-icon">↕</span></th>
+            <th data-col="tipologia">Tipologia <span class="sort-icon">↕</span></th>
+            <th data-col="cidade">Cidade / Estado <span class="sort-icon">↕</span></th>
+            <th data-col="tipo">Tipo <span class="sort-icon">↕</span></th>
+            <th data-col="vm_enforce">VM Enforce <span class="sort-icon">↕</span></th>
+            <th data-col="vf_enforce">VF Enforce <span class="sort-icon">↕</span></th>
+            <th data-col="area">Area <span class="sort-icon">↕</span></th>
+            <th data-col="nivel">N&iacute;vel <span class="sort-icon">↕</span></th>
+            <th data-col="localizacao">Localiza&ccedil;&atilde;o <span class="sort-icon">↕</span></th>
+            <th data-col="status">Status <span class="sort-icon">↕</span></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+</main>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────
+const PROPERTIES = [
+  {mat:"8112",tipologia:"Galpão",cidade:"Santos",estado:"SP",tipo:"Urbano",vm:21201520,vf:15901140,area:42000,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.9618,lng:-46.3322},
+  {mat:"1756",tipologia:"Agroindustria",cidade:"Assis Chateaubriand",estado:"PR",tipo:"Rural",vm:15039375,vf:13197052,area:13587.75,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-24.4167,lng:-53.5167},
+  {mat:"25510",tipologia:"Agroindustria",cidade:"Dourados",estado:"MS",tipo:"Rural",vm:13155059,vf:11395570,area:7.26,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-22.2212,lng:-54.8055},
+  {mat:"58840",tipologia:"Prédio Comercial",cidade:"Vargem Grande Paulista",estado:"SP",tipo:"Urbano",vm:13145579,vf:10516463,area:1407,unidade:"m²",nivel:"Nível 0",localizacao:"Parcialmente Localizado",status:"Concluída",lat:-23.6019,lng:-47.0300},
+  {mat:"23697",tipologia:"Agroindustria",cidade:"PR",estado:"PR",tipo:"Rural",vm:14301000,vf:9790000,area:null,unidade:null,nivel:"Laudo - Lid.",localizacao:"Não disponível",status:"Pendente",lat:-23.4208,lng:-51.9331},
+  {mat:"39606",tipologia:"Prédio Comercial",cidade:"Jacareí",estado:"SP",tipo:"Urbano",vm:8836364,vf:7883985,area:3250,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.2947,lng:-45.9653},
+  {mat:"2164",tipologia:"Gleba",cidade:"Taciba",estado:"SP",tipo:"Rural",vm:8775718,vf:7140620,area:176.35,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-22.3953,lng:-51.2800},
+  {mat:"26999",tipologia:"Prédio Comercial",cidade:"Bragança Paulista",estado:"SP",tipo:"Urbano",vm:6484813,vf:6484813,area:4036.77,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-22.9516,lng:-46.5416},
+  {mat:"10565",tipologia:"Agroindustria",cidade:"Fátima do Sul",estado:"MS",tipo:"Rural",vm:6971320,vf:5594484,area:13.43,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-22.5107,lng:-54.0507},
+  {mat:"145993",tipologia:"Gleba",cidade:"Dourados",estado:"MS",tipo:"Rural",vm:6108735,vf:4956143,area:87.83,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-22.2512,lng:-54.7755},
+  {mat:"6896",tipologia:"Terreno",cidade:"Maringá",estado:"PR",tipo:"Urbano",vm:6875426,vf:4881552,area:15000,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.4205,lng:-51.9333},
+  {mat:"1615",tipologia:"Agroindustria",cidade:"Canoinhas",estado:"SC",tipo:"Rural",vm:5570395,vf:4741799,area:32920,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-26.1786,lng:-50.3917},
+  {mat:"146005",tipologia:"Gleba",cidade:"Dourados",estado:"MS",tipo:"Rural",vm:5325769,vf:4320907,area:86.67,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-22.2012,lng:-54.8355},
+  {mat:"4479",tipologia:"Agroindustria",cidade:"Mauá da Serra",estado:"PR",tipo:"Rural",vm:4986949,vf:4319945,area:27104,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.9000,lng:-51.2500},
+  {mat:"9846",tipologia:"Agroindustria",cidade:"Floraí",estado:"PR",tipo:"Rural",vm:4279250,vf:3803183,area:17430,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.3156,lng:-52.2744},
+  {mat:"5377",tipologia:"Agroindustria",cidade:"Rancho Alegre",estado:"PR",tipo:"Rural",vm:3376178,vf:3000578,area:76230,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.5978,lng:-51.0028},
+  {mat:"35948",tipologia:"Prédio Comercial",cidade:"Indaiatuba",estado:"SP",tipo:"Urbano",vm:3076885,vf:2615352,area:2442,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.0900,lng:-47.2197},
+  {mat:"360",tipologia:"Barracão",cidade:"Piedade",estado:"SP",tipo:"Urbano",vm:2199235,vf:2199235,area:3800,unidade:"m²",nivel:"Nível 0",localizacao:"Parcialmente Localizado",status:"Concluída",lat:-23.9119,lng:-47.4267},
+  {mat:"2464",tipologia:"Gleba",cidade:"Assaí",estado:"PR",tipo:"Rural",vm:2572652,vf:2064553,area:591690,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.3694,lng:-50.8531},
+  {mat:"6193",tipologia:"Agroindustria",cidade:"Mauá da Serra",estado:"PR",tipo:"Rural",vm:1893464,vf:1640213,area:20000,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.9200,lng:-51.2300},
+  {mat:"25766",tipologia:"Galpão",cidade:"Itapeva",estado:"SP",tipo:"Urbano",vm:1537000,vf:1537000,area:null,unidade:null,nivel:"Laudo Lideratu",localizacao:"Não Localizado",status:"Concluída",lat:-23.9822,lng:-48.8757},
+  {mat:"2053",tipologia:"Galpão Industrial",cidade:"Curitibanos",estado:"SC",tipo:"Urbano",vm:1411200,vf:1411200,area:10000,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-27.2825,lng:-50.5783},
+  {mat:"11142",tipologia:"Terreno",cidade:"Piedade",estado:"SP",tipo:"Urbano",vm:1517475,vf:1138106,area:1048,unidade:"m²",nivel:"Nível 0",localizacao:"Parcialmente Localizado",status:"Concluída",lat:-23.9319,lng:-47.4467},
+  {mat:"4379",tipologia:"Galpão",cidade:"Santo Anastácio",estado:"SP",tipo:"Urbano",vm:1013342,vf:709340,area:3371.4,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-21.9758,lng:-51.6564},
+  {mat:"579",tipologia:"Galpão",cidade:"Estrela do Sul",estado:"MG",tipo:"Rural",vm:527500,vf:456947,area:5.1,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-18.7378,lng:-47.6903},
+  {mat:"1453",tipologia:"Galpão",cidade:"São Joaquim",estado:"SC",tipo:"Urbano",vm:2558432,vf:430072,area:null,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-28.2943,lng:-49.9308},
+  {mat:"2629",tipologia:"Terreno",cidade:"Assaí",estado:"PR",tipo:"Urbano",vm:548855,vf:411641,area:3717,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.3794,lng:-50.8631},
+  {mat:"3495",tipologia:"Fazenda",cidade:"Tiros",estado:"MG",tipo:"Rural",vm:332540,vf:332540,area:687.75,unidade:"ha",nivel:"Laudo Jud./3",localizacao:"Parcialmente Localizado",status:"Concluída",lat:-18.9800,lng:-45.9667},
+  {mat:"7632",tipologia:"Gleba",cidade:"Assaí",estado:"PR",tipo:"Urbano",vm:316814,vf:316814,area:115610,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.3894,lng:-50.8731},
+  {mat:"8701",tipologia:"Gleba",cidade:"Guaíra",estado:"PR",tipo:"Rural",vm:391730,vf:314585,area:55.66,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-24.0769,lng:-54.2561},
+  {mat:"3222",tipologia:"Chácara Urbana",cidade:"Assaí",estado:"PR",tipo:"Urbano",vm:404291,vf:303218,area:7006,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.3594,lng:-50.8431},
+  {mat:"7047",tipologia:"Casa Residencial",cidade:"Tatuí",estado:"SP",tipo:"Urbano",vm:283290,vf:198303,area:250,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.3561,lng:-47.8575},
+  {mat:"51",tipologia:"Chácara Urbana",cidade:"São Roque",estado:"SP",tipo:"Urbano",vm:164136,vf:164136,area:580800,unidade:"m²",nivel:"Laudo Jud./3",localizacao:"Parcialmente Localizado",status:"Concluída",lat:-23.5295,lng:-47.1371},
+  {mat:"147628",tipologia:"Apartamento",cidade:"Rio de Janeiro",estado:"RJ",tipo:"Urbano",vm:173345,vf:86673,area:null,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-22.9068,lng:-43.1729},
+  {mat:"11444",tipologia:"Prédio Comercial",cidade:"Guarapuava",estado:"PR",tipo:"Urbano",vm:86187,vf:86187,area:698.75,unidade:"m²",nivel:"Laudo Jud./3",localizacao:"Parcialmente Localizado",status:"Concluída",lat:-25.3896,lng:-51.4625},
+  {mat:"15927",tipologia:"Chácara Urbana",cidade:"São Roque",estado:"SP",tipo:"Urbano",vm:0,vf:0,area:12000,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.5395,lng:-47.1471},
+  {mat:"Posse",tipologia:"—",cidade:"—",estado:"SP",tipo:"Urbano",vm:0,vf:0,area:null,unidade:null,nivel:"—",localizacao:"Não disponível",status:"Pendente",lat:null,lng:null},
+  {mat:"Equipamentos",tipologia:"—",cidade:"—",estado:"GO",tipo:"Rural",vm:0,vf:3900000,area:null,unidade:null,nivel:"Laudo - Rural",localizacao:"Não disponível",status:"Pendente",lat:-16.6869,lng:-49.2648},
+];
+
+// ── HELPERS ───────────────────────────────────────────────────────────
+const fmt = (v) => {
+  if (v == null || v === 0 || isNaN(v)) return '—';
+  if (v >= 1e9) return 'R$ ' + (v/1e9).toFixed(2) + 'B';
+  if (v >= 1e6) return 'R$ ' + (v/1e6).toFixed(2) + 'M';
+  if (v >= 1e3) return 'R$ ' + (v/1e3).toFixed(0) + 'K';
+  return 'R$ ' + v.toFixed(0);
+};
+const fmtArea = (v, u) => {
+  if (!v) return '—';
+  if (v >= 1e6) return (v/1e6).toFixed(2) + ' M' + (u||'');
+  if (v >= 1e3) return (v/1e3).toFixed(1) + ' K' + (u||'');
+  return v.toLocaleString('pt-BR', {maximumFractionDigits:2}) + ' ' + (u||'');
+};
+const numericVM = PROPERTIES.filter(p => p.vm > 0);
+
+// ── KPIs ──────────────────────────────────────────────────────────────
+const totalVM = PROPERTIES.reduce((a,b) => a + (b.vm||0), 0);
+const totalVF = PROPERTIES.reduce((a,b) => a + (b.vf||0), 0);
+const loc = PROPERTIES.filter(p => p.localizacao === 'Localizado').length;
+const partLoc = PROPERTIES.filter(p => p.localizacao === 'Parcialmente Localizado').length;
+const nLoc = PROPERTIES.filter(p => p.localizacao === 'Não Localizado').length;
+const conc = PROPERTIES.filter(p => p.status === 'Concluída').length;
+const rural = PROPERTIES.filter(p => p.tipo === 'Rural').length;
+const urbano = PROPERTIES.filter(p => p.tipo === 'Urbano').length;
+const total = PROPERTIES.length;
+
+// Animated counter
+function animCount(el, target, prefix='', decimals=0) {
+  let start = 0, dur = 1200, startTime = null;
+  const step = (ts) => {
+    if (!startTime) startTime = ts;
+    const p = Math.min((ts - startTime) / dur, 1);
+    const val = p * target;
+    el.textContent = prefix + val.toLocaleString('pt-BR', {maximumFractionDigits: decimals});
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  // Header date
+  document.getElementById('headerDate').textContent = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'});
+
+  // KPIs
+  animCount(document.getElementById('kpiVM'), totalVM/1e6, 'R$ ', 1);
+  document.getElementById('kpiVM').textContent += 'M'; // patch after anim
+  setTimeout(() => document.getElementById('kpiVM').textContent = 'R$ ' + (totalVM/1e6).toFixed(1) + 'M', 1250);
+
+  animCount(document.getElementById('kpiVF'), totalVF/1e6, 'R$ ', 1);
+  setTimeout(() => document.getElementById('kpiVF').textContent = 'R$ ' + (totalVF/1e6).toFixed(1) + 'M', 1250);
+
+  animCount(document.getElementById('kpiLoc'), loc);
+  animCount(document.getElementById('kpiConc'), conc);
+  animCount(document.getElementById('kpiRural'), rural);
+  document.getElementById('kpiUrbano').textContent = urbano;
+
+  // Ring
+  const circumference = 2 * Math.PI * 32;
+  const pct = loc / total;
+  const offset = circumference * (1 - pct);
+  document.getElementById('ringLoc').style.strokeDashoffset = offset;
+  document.getElementById('ringPct').textContent = Math.round(pct * 100) + '%';
+  document.getElementById('statLoc').textContent = loc;
+  document.getElementById('statPart').textContent = partLoc;
+  document.getElementById('statNLoc').textContent = nLoc;
+
+  // Map badge
+  document.getElementById('mapCount').textContent = PROPERTIES.filter(p=>p.lat).length + ' marcadores';
+
+  // Init everything
+  initMap();
+  initCharts();
+  renderCompare();
+  renderValueBars();
+  initTable();
+});
+
+// ── MAP ───────────────────────────────────────────────────────────────
+function initMap() {
+  const map = L.map('map', {
+    center: [-20, -50],
+    zoom: 5,
+    zoomControl: true,
+  });
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '©OpenStreetMap ©CartoDB',
+    maxZoom: 18,
+  }).addTo(map);
+
+  const getColor = (vm) => {
+    if (!vm || vm === 0) return '#64748b';
+    if (vm >= 10e6) return '#10b981';
+    if (vm >= 1e6) return '#3b82f6';
+    return '#f59e0b';
+  };
+
+  PROPERTIES.filter(p => p.lat && p.lng).forEach(p => {
+    const color = getColor(p.vm);
+    const r = Math.max(7, Math.min(22, Math.sqrt((p.vm||0)/1e6) * 3 + 7));
+
+    const marker = L.circleMarker([p.lat, p.lng], {
+      radius: r,
+      fillColor: color,
+      color: '#fff',
+      weight: 1.5,
+      opacity: .9,
+      fillOpacity: .75,
+    }).addTo(map);
+
+    marker.bindPopup(`
+      <div class="popup-title">${p.tipologia} &mdash; Mat. ${p.mat}</div>
+      <div class="popup-row"><span>📍 Cidade</span><span class="popup-val">${p.cidade}, ${p.estado}</span></div>
+      <div class="popup-row"><span>🏛️ Tipo</span><span class="popup-val">${p.tipo}</span></div>
+      <div class="popup-row"><span>💰 VM Enforce</span><span class="popup-val">${fmt(p.vm)}</span></div>
+      <div class="popup-row"><span>📉 VF Enforce</span><span class="popup-val">${fmt(p.vf)}</span></div>
+      ${p.area ? `<div class="popup-row"><span>📐 Área</span><span class="popup-val">${fmtArea(p.area, p.unidade)}</span></div>` : ''}
+      <div style="margin-top:8px;">
+        <span class="popup-chip" style="background:${color}22;color:${color};border:1px solid ${color}44">${p.localizacao}</span>
+        <span class="popup-chip" style="background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.25);margin-left:4px">${p.nivel}</span>
+      </div>
+    `, { maxWidth: 260 });
+  });
+}
+
+// ── CHARTS ────────────────────────────────────────────────────────────
+Chart.defaults.color = '#64748b';
+Chart.defaults.font.family = 'Inter';
+
+function initCharts() {
+  // Tipologia — ranked bar list (no color soup)
+  const tipCounts = {};
+  PROPERTIES.forEach(p => {
+    const t = p.tipologia && p.tipologia !== '—' ? p.tipologia.trim() : 'Outros';
+    tipCounts[t] = (tipCounts[t] || 0) + 1;
+  });
+  const tipSorted = Object.entries(tipCounts).sort((a,b) => b[1]-a[1]);
+  const tipMax = tipSorted[0][1];
+  const tipContainer = document.getElementById('tipologiaList');
+  document.getElementById('tipCount').textContent = tipSorted.length + ' categorias';
+  tipContainer.innerHTML = tipSorted.map(([label, count], i) => {
+    const pct = (count / tipMax * 100).toFixed(1);
+    // Single-hue palette: full blue → faded blue
+    const opacity = Math.max(0.25, 1 - i * 0.07);
+    return `
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:11px;color:var(--text-soft);width:130px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${label}">${label}</span>
+        <div style="flex:1;height:16px;background:var(--surface2);border-radius:4px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:rgba(59,130,246,${opacity});border-radius:4px;transition:width .8s ease;display:flex;align-items:center;padding-left:6px;">
+            ${count >= 2 ? `<span style="font-size:9px;font-weight:700;color:#fff;opacity:.9">${count}</span>` : ''}
+          </div>
+        </div>
+        <span style="font-size:12px;font-weight:700;color:var(--text);width:16px;text-align:right;flex-shrink:0">${count}</span>
+      </div>`;
+  }).join('');
+  
+
+  // Top 10 VM bar
+  const top10 = [...PROPERTIES].filter(p=>p.vm>0).sort((a,b)=>b.vm-a.vm).slice(0,10);
+  new Chart(document.getElementById('chartTopVM'), {
+    type: 'bar',
+    data: {
+      labels: top10.map(p => p.cidade.length > 12 ? p.cidade.slice(0,12)+'…' : p.cidade),
+      datasets: [{
+        label: 'VM Enforce',
+        data: top10.map(p => p.vm),
+        backgroundColor: top10.map(p => p.vm >= 10e6 ? '#10b981' : p.vm >= 5e6 ? '#3b82f6' : '#06b6d4'),
+        borderRadius: 5,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: (ctx) => ' ' + fmt(ctx.raw) }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: '#1e3052' },
+          ticks: { callback: v => 'R$' + (v/1e6).toFixed(0) + 'M', font: {size:10} }
+        },
+        y: {
+          grid: { display: false },
+          ticks: { font: {size:10} }
+        }
+      }
+    }
+  });
+
+  // Estado bar
+  const estadoCounts = {};
+  PROPERTIES.forEach(p => {
+    estadoCounts[p.estado] = (estadoCounts[p.estado] || 0) + 1;
+  });
+  const estSorted = Object.entries(estadoCounts).sort((a,b)=>b[1]-a[1]);
+  const estColors = { SP:'#3b82f6', PR:'#10b981', MS:'#f59e0b', SC:'#a855f7', MG:'#ef4444', RJ:'#06b6d4', GO:'#f97316' };
+
+  new Chart(document.getElementById('chartEstados'), {
+    type: 'bar',
+    data: {
+      labels: estSorted.map(x=>x[0]),
+      datasets: [{
+        label: 'Imóveis',
+        data: estSorted.map(x=>x[1]),
+        backgroundColor: estSorted.map(x => estColors[x[0]] || '#6366f1'),
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: {font:{size:11}} },
+        y: { grid: { color: '#1e3052' }, ticks: {stepSize:1,font:{size:10}} }
+      }
+    }
+  });
+
+
+  // Tipo Rural/Urbano doughnut
+  const tipoVM = {Urbano:0, Rural:0};
+  PROPERTIES.forEach(p => { if(p.vm) tipoVM[p.tipo] = (tipoVM[p.tipo]||0) + p.vm; });
+  new Chart(document.getElementById('chartTipoRuralUrbano'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Urbano (VM)', 'Rural (VM)'],
+      datasets: [{
+        data: [tipoVM.Urbano, tipoVM.Rural],
+        backgroundColor: ['#3b82f6','#10b981'],
+        borderColor: '#0e1a2d',
+        borderWidth: 3,
+      }]
+    },
+    options: {
+      cutout: '70%',
+      plugins: {
+        legend: { labels: {font:{size:11}, padding:14} },
+        tooltip: { callbacks: { label: (ctx) => ' ' + ctx.label + ': ' + fmt(ctx.raw) } }
+      }
+    }
+  });
+}
+
+// ── COMPARE BARS ──────────────────────────────────────────────────────
+function renderCompare() {
+  const top12 = [...PROPERTIES].filter(p=>p.vm>0).sort((a,b)=>b.vm-a.vm).slice(0,12);
+  const maxVal = top12[0].vm;
+  const container = document.getElementById('compareList');
+  container.innerHTML = top12.map(p => {
+    const vmPct = (p.vm / maxVal * 100).toFixed(1);
+    const vfPct = (p.vf / maxVal * 100).toFixed(1);
+    return `
+      <div class="cmp-item">
+        <div class="cmp-header">
+          <span class="cmp-city">${p.tipologia} &mdash; ${p.cidade}, ${p.estado}</span>
+          <span class="cmp-values">${fmt(p.vm)} / ${fmt(p.vf)}</span>
+        </div>
+        <div class="cmp-bars">
+          <div class="cmp-vm" style="width:${vmPct}%;flex-shrink:0"></div>
+          <div style="flex:1;background:var(--surface2)"></div>
+        </div>
+        <div class="cmp-bars" style="margin-top:2px;">
+          <div class="cmp-vf" style="width:${vfPct}%;flex-shrink:0"></div>
+          <div style="flex:1;background:var(--surface2)"></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── VALUE BARS ────────────────────────────────────────────────────────
+function renderValueBars() {
+  const estadoVM = {};
+  PROPERTIES.forEach(p => {
+    if (p.vm > 0) estadoVM[p.estado] = (estadoVM[p.estado]||0) + p.vm;
+  });
+  const sorted = Object.entries(estadoVM).sort((a,b)=>b[1]-a[1]);
+  const maxV = sorted[0][1];
+  const colors = ['#3b82f6','#10b981','#f59e0b','#a855f7','#06b6d4','#ef4444','#f97316'];
+  const container = document.getElementById('valueBarList');
+  container.innerHTML = sorted.map(([est, val], i) => `
+    <div class="value-bar-item">
+      <div class="value-bar-label">
+        <span>${est}</span>
+        <span>${fmt(val)}</span>
+      </div>
+      <div class="value-bar-track">
+        <div class="value-bar-fill" style="width:${(val/maxV*100).toFixed(1)}%;background:${colors[i%colors.length]}"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── TABLE ─────────────────────────────────────────────────────────────
+let filteredData = [...PROPERTIES];
+let currentPage = 1;
+const PAGE_SIZE = 10;
+let sortCol = 'vm_enforce';
+let sortDir = 1;
+
+function locChip(loc) {
+  if (!loc || loc==='Não disponível') return `<span class="chip chip-gray">—</span>`;
+  if (loc === 'Localizado') return `<span class="chip chip-green">✓ Localizado</span>`;
+  if (loc.includes('Parcialmente')) return `<span class="chip chip-amber">~ Parcial</span>`;
+  if (loc.includes('Não')) return `<span class="chip chip-red">✗ Não Loc.</span>`;
+  return `<span class="chip chip-gray">${loc}</span>`;
+}
+function statusChip(s) {
+  if (s === 'Concluída') return `<span class="chip chip-green">Concluída</span>`;
+  return `<span class="chip chip-amber">${s||'—'}</span>`;
+}
+function nivelChip(n) {
+  if (!n || n==='—') return `<span class="chip chip-gray">—</span>`;
+  if (n.startsWith('Nível 1')) return `<span class="chip chip-blue">${n}</span>`;
+  if (n.startsWith('Nível 0')) return `<span class="chip chip-amber">${n}</span>`;
+  if (n.includes('Jud')) return `<span class="chip chip-purple">${n}</span>`;
+  if (n.includes('Laudo')) return `<span class="chip chip-cyan">${n}</span>`;
+  return `<span class="chip chip-gray">${n}</span>`;
+}
+function tipoChip(t) {
+  if (t === 'Urbano') return `<span class="chip chip-blue">Urbano</span>`;
+  if (t === 'Rural') return `<span class="chip chip-green">Rural</span>`;
+  return `<span class="chip chip-gray">${t}</span>`;
+}
+
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const page = filteredData.slice(start, start + PAGE_SIZE);
+
+  tbody.innerHTML = page.map(p => `
+    <tr>
+      <td><span style="font-weight:600;color:var(--text)">${p.mat}</span></td>
+      <td>${p.tipologia}</td>
+      <td><span style="color:var(--text)">${p.cidade}</span><br><span style="font-size:10px;color:var(--text-muted)">${p.estado}</span></td>
+      <td>${tipoChip(p.tipo)}</td>
+      <td><span class="num-val ${p.vm >= 5e6 ? 'large' : ''}">${fmt(p.vm)}</span></td>
+      <td><span class="num-val">${fmt(p.vf)}</span></td>
+      <td>${fmtArea(p.area, p.unidade)}</td>
+      <td>${nivelChip(p.nivel)}</td>
+      <td>${locChip(p.localizacao)}</td>
+      <td>${statusChip(p.status)}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('tableCount').textContent = `${filteredData.length} imóveis`;
+  renderPagination();
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
+  const pg = document.getElementById('pagination');
+  let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>← Ant.</button>`;
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
+      html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+    } else if (Math.abs(i - currentPage) === 2) {
+      html += `<span style="color:var(--text-muted);padding:0 4px">…</span>`;
+    }
+  }
+  html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>Próx. →</button>`;
+  pg.innerHTML = html;
+}
+
+function goPage(n) {
+  const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
+  currentPage = Math.max(1, Math.min(n, totalPages));
+  renderTable();
+}
+
+function applyFilters() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const estado = document.getElementById('filterEstado').value;
+  const tipo = document.getElementById('filterTipo').value;
+  const status = document.getElementById('filterStatus').value;
+
+  filteredData = PROPERTIES.filter(p => {
+    const matchSearch = !search ||
+      String(p.mat).toLowerCase().includes(search) ||
+      (p.cidade||'').toLowerCase().includes(search) ||
+      (p.tipologia||'').toLowerCase().includes(search) ||
+      (p.estado||'').toLowerCase().includes(search);
+    const matchEstado = !estado || p.estado === estado;
+    const matchTipo = !tipo || p.tipo === tipo;
+    const matchStatus = !status || p.status === status;
+    return matchSearch && matchEstado && matchTipo && matchStatus;
+  });
+
+  // sort
+  filteredData.sort((a, b) => {
+    let av = a[sortCol === 'vm_enforce' ? 'vm' : sortCol === 'vf_enforce' ? 'vf' : sortCol];
+    let bv = b[sortCol === 'vm_enforce' ? 'vm' : sortCol === 'vf_enforce' ? 'vf' : sortCol];
+    if (av == null) av = '';
+    if (bv == null) bv = '';
+    if (typeof av === 'number' && typeof bv === 'number') return (bv - av) * sortDir;
+    return String(av).localeCompare(String(bv), 'pt-BR') * sortDir;
+  });
+
+  currentPage = 1;
+  renderTable();
+}
+
+function initTable() {
+  // Populate estado filter
+  const estados = [...new Set(PROPERTIES.map(p=>p.estado))].sort();
+  const sel = document.getElementById('filterEstado');
+  estados.forEach(e => {
+    const opt = document.createElement('option');
+    opt.value = e; opt.textContent = e;
+    sel.appendChild(opt);
+  });
+
+  // Sort headers
+  document.querySelectorAll('.data-table th[data-col]').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.getAttribute('data-col');
+      if (sortCol === col) { sortDir *= -1; }
+      else { sortCol = col; sortDir = -1; }
+      document.querySelectorAll('.data-table th').forEach(h => h.classList.remove('sorted'));
+      th.classList.add('sorted');
+      applyFilters();
+    });
+  });
+
+  // Filters
+  document.getElementById('searchInput').addEventListener('input', applyFilters);
+  document.getElementById('filterEstado').addEventListener('change', applyFilters);
+  document.getElementById('filterTipo').addEventListener('change', applyFilters);
+  document.getElementById('filterStatus').addEventListener('change', applyFilters);
+
+  applyFilters();
+}
+</script>
+</body>
+</html>
