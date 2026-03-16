@@ -9,6 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -107,6 +108,56 @@
       font-size: 12px;
       color: var(--text-muted);
     }
+    .import-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(59,130,246,.12);
+      border: 1px solid rgba(59,130,246,.35);
+      color: #93c5fd;
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: background .2s, border-color .2s, color .2s;
+      white-space: nowrap;
+    }
+    .import-btn:hover {
+      background: rgba(59,130,246,.22);
+      border-color: rgba(59,130,246,.6);
+      color: #bfdbfe;
+    }
+    .import-btn.success {
+      background: rgba(16,185,129,.12);
+      border-color: rgba(16,185,129,.35);
+      color: #6ee7b7;
+    }
+    .import-toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      box-shadow: 0 8px 32px rgba(0,0,0,.5);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: transform .3s cubic-bezier(.4,0,.2,1), opacity .3s;
+    }
+    .import-toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
 
     /* ── LAYOUT ─────────────────────────────────────── */
     main {
@@ -160,12 +211,13 @@
       height: 3px;
       border-radius: var(--radius) var(--radius) 0 0;
     }
-    .kpi-card.blue::before  { background: linear-gradient(90deg, var(--primary), var(--accent)); }
-    .kpi-card.green::before { background: linear-gradient(90deg, var(--green), #34d399); }
-    .kpi-card.amber::before { background: linear-gradient(90deg, var(--amber), #fcd34d); }
-    .kpi-card.red::before   { background: linear-gradient(90deg, var(--red), #f87171); }
+    .kpi-card.blue::before   { background: linear-gradient(90deg, var(--primary), var(--accent)); }
+    .kpi-card.green::before  { background: linear-gradient(90deg, var(--green), #34d399); }
+    .kpi-card.amber::before  { background: linear-gradient(90deg, var(--amber), #fcd34d); }
+    .kpi-card.red::before    { background: linear-gradient(90deg, var(--red), #f87171); }
     .kpi-card.purple::before { background: linear-gradient(90deg, var(--purple), #c084fc); }
-    .kpi-card.cyan::before  { background: linear-gradient(90deg, var(--accent), #67e8f9); }
+    .kpi-card.cyan::before   { background: linear-gradient(90deg, var(--accent), #67e8f9); }
+    .kpi-card.orange::before { background: linear-gradient(90deg, #f97316, #fb923c); }
 
     .kpi-icon {
       width: 42px;
@@ -183,6 +235,21 @@
     .kpi-card.red .kpi-icon    { background: rgba(239,68,68,.15); }
     .kpi-card.purple .kpi-icon { background: rgba(168,85,247,.15); }
     .kpi-card.cyan .kpi-icon   { background: rgba(6,182,212,.15); }
+    .kpi-card.orange .kpi-icon { background: rgba(249,115,22,.15); }
+
+    .sale-progress-bar {
+      margin-top: 14px;
+      height: 4px;
+      border-radius: 4px;
+      background: rgba(255,255,255,.08);
+      overflow: hidden;
+    }
+    .sale-progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 1.2s cubic-bezier(.4,0,.2,1);
+    }
+    .sale-progress-fill.green-fill { background: linear-gradient(90deg, var(--green), #34d399); }
 
     .kpi-value {
       font-size: 26px;
@@ -532,6 +599,7 @@
     .cmp-bars { display: flex; height: 7px; border-radius: 4px; overflow: hidden; gap: 2px; }
     .cmp-vm { background: var(--primary); }
     .cmp-vf { background: var(--accent); }
+    .cmp-gi { background: var(--amber); }
   </style>
 </head>
 <body>
@@ -545,10 +613,13 @@
     </div>
   </div>
   <div class="header-meta">
-    <span class="live-badge"><span class="live-dot"></span>38 ativos</span>
+    <span class="live-badge"><span class="live-dot"></span><span id="liveCount">38</span> ativos</span>
     <span class="header-date" id="headerDate"></span>
+    <button class="import-btn" id="importBtn">📂 Importar Planilha</button>
+    <input type="file" id="fileInput" accept=".xlsx,.xls,.ods" style="display:none" />
   </div>
 </header>
+<div class="import-toast" id="importToast"></div>
 
 <main>
   <!-- KPI CARDS -->
@@ -572,82 +643,59 @@
       <div class="kpi-label">Venda For&ccedil;ada Total (VF)</div>
       <div class="kpi-sub">Soma VF Enforce</div>
     </div>
-    <div class="kpi-card amber">
-      <div class="kpi-icon">📍</div>
-      <div class="kpi-value" id="kpiLoc">—</div>
-      <div class="kpi-label">Im&oacute;veis Localizados</div>
-      <div class="kpi-sub">de 38 no portfolio</div>
+  </div>
+
+  <!-- SALES STATUS -->
+  <div class="section-title">Status de Venda</div>
+  <div class="kpi-grid">
+
+    <div class="kpi-card green">
+      <div class="kpi-icon">🏷️</div>
+      <div class="kpi-value" id="kpiVendidos">—</div>
+      <div class="kpi-label">Im&oacute;veis Vendidos</div>
+      <div class="kpi-sub">
+        <span class="kpi-badge" id="kpiVendidosPct">—</span>&nbsp;do portfolio
+      </div>
+      <div class="sale-progress-bar">
+        <div class="sale-progress-fill green-fill" id="kpiVendidosBar" style="width:0%"></div>
+      </div>
     </div>
-    <div class="kpi-card purple">
-      <div class="kpi-icon">✅</div>
-      <div class="kpi-value" id="kpiConc">—</div>
-      <div class="kpi-label">Tarefas Conclu&iacute;das</div>
-      <div class="kpi-sub">status da tarefa</div>
+
+    <div class="kpi-card cyan">
+      <div class="kpi-icon">💵</div>
+      <div class="kpi-value" id="kpiValorVendido">—</div>
+      <div class="kpi-label">Valor Total Vendido</div>
+      <div class="kpi-sub">Soma Tabela GI (propostas)</div>
     </div>
-    <div class="kpi-card red">
-      <div class="kpi-icon">🌳</div>
-      <div class="kpi-value" id="kpiRural">—</div>
-      <div class="kpi-label">Im&oacute;veis Rurais</div>
-      <div class="kpi-sub">vs. <span id="kpiUrbano">—</span> urbanos</div>
+
+    <div class="kpi-card orange">
+      <div class="kpi-icon">📦</div>
+      <div class="kpi-value" id="kpiEstoque">—</div>
+      <div class="kpi-label">Estoque N&atilde;o Vendido</div>
+      <div class="kpi-sub">VF Total &minus; Valor Vendido</div>
     </div>
+
+    <div class="kpi-card blue">
+      <div class="kpi-icon">🏢</div>
+      <div class="kpi-value" id="kpiRecebido">—</div>
+      <div class="kpi-label">Valor Gest&atilde;o Imobili&aacute;ria</div>
+      <div class="kpi-sub">Soma Tabela GI (portfolio)</div>
+    </div>
+
+
   </div>
 
   <!-- MAP + DONUT -->
   <div class="section-title">Distribui&ccedil;&atilde;o Geogr&aacute;fica</div>
-  <div class="row-map-chart">
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">🗺️ Localiza&ccedil;&atilde;o dos Im&oacute;veis no Brasil</span>
-        <span class="card-badge" id="mapCount">—</span>
-      </div>
-      <div id="map"></div>
-      <div style="margin-top:12px; display:flex; gap:16px; flex-wrap:wrap;">
-        <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>VM &gt; R$10M</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>VM R$1M–10M</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>VM &lt; R$1M</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#64748b"></div>Sem valor</div>
-      </div>
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-header">
+      <span class="card-title">🗺️ Localiza&ccedil;&atilde;o dos Im&oacute;veis no Brasil</span>
+      <span class="card-badge" id="mapCount">—</span>
     </div>
-    <div style="display:flex; flex-direction:column; gap:20px;">
-      <div class="card" style="flex:1">
-        <div class="card-header">
-          <span class="card-title">🏷️ Por Tipologia</span>
-          <span class="card-badge" id="tipCount">—</span>
-        </div>
-        <div id="tipologiaList" style="display:flex;flex-direction:column;gap:7px;"></div>
-      </div>
-      <div class="card" style="flex:1">
-        <div class="card-header">
-          <span class="card-title">🔍 Status de Localiza&ccedil;&atilde;o</span>
-        </div>
-        <div class="ring-container">
-          <div class="ring-wrap">
-            <svg width="80" height="80" viewBox="0 0 80 80">
-              <circle cx="40" cy="40" r="32" fill="none" stroke="#1e3052" stroke-width="8"/>
-              <circle cx="40" cy="40" r="32" fill="none" stroke="#10b981" stroke-width="8"
-                stroke-dasharray="200.96" stroke-dashoffset="0" id="ringLoc" stroke-linecap="round"/>
-            </svg>
-            <div class="ring-label">
-              <div class="ring-pct" id="ringPct" style="color:var(--green)">—%</div>
-              <div class="ring-sub">Loc.</div>
-            </div>
-          </div>
-          <div class="stat-pills">
-            <div class="stat-pill">
-              <div class="stat-pill-label"><div class="dot" style="background:#10b981"></div>Localizado</div>
-              <div class="stat-pill-value" id="statLoc" style="color:#34d399">—</div>
-            </div>
-            <div class="stat-pill">
-              <div class="stat-pill-label"><div class="dot" style="background:#f59e0b"></div>Parcialmente</div>
-              <div class="stat-pill-value" id="statPart" style="color:#fcd34d">—</div>
-            </div>
-            <div class="stat-pill">
-              <div class="stat-pill-label"><div class="dot" style="background:#ef4444"></div>N&atilde;o Localizado</div>
-              <div class="stat-pill-value" id="statNLoc" style="color:#f87171">—</div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div id="map"></div>
+    <div style="margin-top:12px; display:flex; gap:16px; flex-wrap:wrap;">
+      <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>Urbano</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>Rural</div>
     </div>
   </div>
 
@@ -677,10 +725,11 @@
   <div class="row-2col">
     <div class="card">
       <div class="card-header">
-        <span class="card-title">📈 VM vs. VF &mdash; Top 12 Im&oacute;veis</span>
+        <span class="card-title">📈 VM vs. VF vs. Tabela GI &mdash; Top 15 Im&oacute;veis</span>
         <div style="display:flex;gap:12px;font-size:11px;align-items:center">
           <span style="display:flex;align-items:center;gap:4px;color:var(--text-soft)"><div style="width:10px;height:4px;background:var(--primary);border-radius:2px"></div>VM</span>
           <span style="display:flex;align-items:center;gap:4px;color:var(--text-soft)"><div style="width:10px;height:4px;background:var(--accent);border-radius:2px"></div>VF</span>
+          <span style="display:flex;align-items:center;gap:4px;color:var(--text-soft)"><div style="width:10px;height:4px;background:var(--amber);border-radius:2px"></div>Tabela GI</span>
         </div>
       </div>
       <div class="compare-row" id="compareList"></div>
@@ -728,9 +777,8 @@
             <th data-col="vm_enforce">VM Enforce <span class="sort-icon">↕</span></th>
             <th data-col="vf_enforce">VF Enforce <span class="sort-icon">↕</span></th>
             <th data-col="area">Area <span class="sort-icon">↕</span></th>
-            <th data-col="nivel">N&iacute;vel <span class="sort-icon">↕</span></th>
-            <th data-col="localizacao">Localiza&ccedil;&atilde;o <span class="sort-icon">↕</span></th>
-            <th data-col="status">Status <span class="sort-icon">↕</span></th>
+            <th data-col="tabelaGI">Tabela GI <span class="sort-icon">↕</span></th>
+            <th data-col="obs">Obs</th>
           </tr>
         </thead>
         <tbody id="tableBody"></tbody>
@@ -742,7 +790,7 @@
 
 <script>
 // ── DATA ─────────────────────────────────────────────────────────────
-const PROPERTIES = [
+let PROPERTIES = [
   {mat:"8112",tipologia:"Galpão",cidade:"Santos",estado:"SP",tipo:"Urbano",vm:21201520,vf:15901140,area:42000,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.9618,lng:-46.3322},
   {mat:"1756",tipologia:"Agroindustria",cidade:"Assis Chateaubriand",estado:"PR",tipo:"Rural",vm:15039375,vf:13197052,area:13587.75,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-24.4167,lng:-53.5167},
   {mat:"25510",tipologia:"Agroindustria",cidade:"Dourados",estado:"MS",tipo:"Rural",vm:13155059,vf:11395570,area:7.26,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-22.2212,lng:-54.8055},
@@ -783,6 +831,15 @@ const PROPERTIES = [
   {mat:"Equipamentos",tipologia:"—",cidade:"—",estado:"GO",tipo:"Rural",vm:0,vf:3900000,area:null,unidade:null,nivel:"Laudo - Rural",localizacao:"Não disponível",status:"Pendente",lat:-16.6869,lng:-49.2648},
 ];
 
+// ── DADOS DE VENDA ────────────────────────────────────────────────────
+// Chave: mat do imóvel | valorVenda: preço de venda | valorRecebido: caixa confirmado
+const SALES = {
+  "8112":  { valorVenda: 19500000, valorRecebido: 19500000 },
+  "39606": { valorVenda:  7200000, valorRecebido:  7200000 },
+  "35948": { valorVenda:  2700000, valorRecebido:  1350000 },
+  "4379":  { valorVenda:   850000, valorRecebido:   850000 },
+};
+
 // ── HELPERS ───────────────────────────────────────────────────────────
 const fmt = (v) => {
   if (v == null || v === 0 || isNaN(v)) return '—';
@@ -797,18 +854,58 @@ const fmtArea = (v, u) => {
   if (v >= 1e3) return (v/1e3).toFixed(1) + ' K' + (u||'');
   return v.toLocaleString('pt-BR', {maximumFractionDigits:2}) + ' ' + (u||'');
 };
-const numericVM = PROPERTIES.filter(p => p.vm > 0);
+// Lat/Lng preservados do dado inicial para usar ao importar planilha (que não tem coordenadas)
+const LAT_LNG_BY_MAT = {};
+PROPERTIES.forEach(p => { if (p.lat && p.lng) LAT_LNG_BY_MAT[String(p.mat)] = { lat: p.lat, lng: p.lng }; });
 
 // ── KPIs ──────────────────────────────────────────────────────────────
-const totalVM = PROPERTIES.reduce((a,b) => a + (b.vm||0), 0);
-const totalVF = PROPERTIES.reduce((a,b) => a + (b.vf||0), 0);
-const loc = PROPERTIES.filter(p => p.localizacao === 'Localizado').length;
-const partLoc = PROPERTIES.filter(p => p.localizacao === 'Parcialmente Localizado').length;
-const nLoc = PROPERTIES.filter(p => p.localizacao === 'Não Localizado').length;
-const conc = PROPERTIES.filter(p => p.status === 'Concluída').length;
-const rural = PROPERTIES.filter(p => p.tipo === 'Rural').length;
-const urbano = PROPERTIES.filter(p => p.tipo === 'Urbano').length;
-const total = PROPERTIES.length;
+let totalVM, totalVF, loc, partLoc, nLoc, rural, urbano, total;
+let vendidos, naoVendidos, qtdVendidos, totalVendido, totalRecebido, vmNaoVendido, vfNaoVendido, totalTabelaGI, saldoVF;
+
+function computeKPIs() {
+  totalVM = PROPERTIES.reduce((a,b) => a + (b.vm||0), 0);
+  totalVF = PROPERTIES.reduce((a,b) => a + (b.vf||0), 0);
+  loc     = PROPERTIES.filter(p => p.localizacao === 'Localizado').length;
+  partLoc = PROPERTIES.filter(p => p.localizacao === 'Parcialmente Localizado').length;
+  nLoc    = PROPERTIES.filter(p => p.localizacao === 'Não Localizado').length;
+  rural   = PROPERTIES.filter(p => p.tipo === 'Rural').length;
+  urbano  = PROPERTIES.filter(p => p.tipo === 'Urbano').length;
+  total   = PROPERTIES.length;
+
+  // Determina vendido: prioriza statusVenda da planilha, cai para SALES hardcoded
+  const _isVendido = (p) => (p.statusVenda != null)
+    ? p.statusVenda.trim().toLowerCase() === 'vendido'
+    : !!SALES[p.mat];
+
+  vendidos    = PROPERTIES.filter(_isVendido);
+  naoVendidos = PROPERTIES.filter(p => !_isVendido(p));
+  qtdVendidos = vendidos.length;
+
+  // Valor vendido = soma da coluna Proposta dos vendidos; fallback Tabela GI → SALES
+  totalVendido = vendidos.reduce((a, b) => {
+    const val = b.proposta ?? parseNum(b.tabelaGI) ?? SALES[b.mat]?.valorVenda ?? 0;
+    return a + val;
+  }, 0);
+
+  // Já recebido = mesma base (Proposta confirmada); fallback Tabela GI → SALES
+  totalRecebido = vendidos.reduce((a, b) => {
+    const val = b.proposta ?? parseNum(b.tabelaGI) ?? SALES[b.mat]?.valorRecebido ?? 0;
+    return a + val;
+  }, 0);
+
+  vmNaoVendido  = naoVendidos.reduce((a, b) => a + (b.vm || 0), 0);
+  vfNaoVendido  = naoVendidos.reduce((a, b) => a + (b.vf || 0), 0);
+
+  // Soma de Tabela GI de todo o portfolio (valores numéricos)
+  totalTabelaGI = PROPERTIES.reduce((a, b) => a + (parseNum(b.tabelaGI) || 0), 0);
+
+  // VF dos imóveis vendidos (não confundir com Proposta)
+  const vfVendidos = vendidos.reduce((a, b) => a + (b.vf || 0), 0);
+
+  // Saldo: VF Total − VF dos Vendidos = VF dos Não Vendidos (= vfNaoVendido)
+  saldoVF = totalVF - vfVendidos;
+}
+computeKPIs();
 
 // Animated counter
 function animCount(el, target, prefix='', decimals=0) {
@@ -823,66 +920,112 @@ function animCount(el, target, prefix='', decimals=0) {
   requestAnimationFrame(step);
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-  // Header date
-  document.getElementById('headerDate').textContent = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'});
-
-  // KPIs
+function renderKPIs() {
+  animCount(document.getElementById('kpiTotal'), total);
   animCount(document.getElementById('kpiVM'), totalVM/1e6, 'R$ ', 1);
-  document.getElementById('kpiVM').textContent += 'M'; // patch after anim
   setTimeout(() => document.getElementById('kpiVM').textContent = 'R$ ' + (totalVM/1e6).toFixed(1) + 'M', 1250);
 
   animCount(document.getElementById('kpiVF'), totalVF/1e6, 'R$ ', 1);
   setTimeout(() => document.getElementById('kpiVF').textContent = 'R$ ' + (totalVF/1e6).toFixed(1) + 'M', 1250);
 
-  animCount(document.getElementById('kpiLoc'), loc);
-  animCount(document.getElementById('kpiConc'), conc);
-  animCount(document.getElementById('kpiRural'), rural);
-  document.getElementById('kpiUrbano').textContent = urbano;
+  animCount(document.getElementById('kpiVendidos'), qtdVendidos);
+  const vendPct = total > 0 ? Math.round(qtdVendidos / total * 100) : 0;
+  document.getElementById('kpiVendidosPct').textContent = vendPct + '%';
+  setTimeout(() => {
+    const bar = document.getElementById('kpiVendidosBar');
+    if (bar) bar.style.width = vendPct + '%';
+  }, 100);
 
-  // Ring
-  const circumference = 2 * Math.PI * 32;
-  const pct = loc / total;
-  const offset = circumference * (1 - pct);
-  document.getElementById('ringLoc').style.strokeDashoffset = offset;
-  document.getElementById('ringPct').textContent = Math.round(pct * 100) + '%';
-  document.getElementById('statLoc').textContent = loc;
-  document.getElementById('statPart').textContent = partLoc;
-  document.getElementById('statNLoc').textContent = nLoc;
+  animCount(document.getElementById('kpiValorVendido'), totalVendido / 1e6, 'R$ ', 1);
+  setTimeout(() => { document.getElementById('kpiValorVendido').textContent = fmt(totalVendido); }, 1250);
 
-  // Map badge
+  const estoqueRestante = totalVF - totalVendido;
+  animCount(document.getElementById('kpiEstoque'), estoqueRestante / 1e6, 'R$ ', 1);
+  setTimeout(() => { document.getElementById('kpiEstoque').textContent = fmt(estoqueRestante); }, 1250);
+
+  animCount(document.getElementById('kpiRecebido'), totalTabelaGI / 1e6, 'R$ ', 1);
+  setTimeout(() => { document.getElementById('kpiRecebido').textContent = fmt(totalTabelaGI); }, 1250);
+
+
+  document.getElementById('liveCount').textContent = total;
+}
+
+function renderAll() {
+  computeKPIs();
+  renderKPIs();
   document.getElementById('mapCount').textContent = PROPERTIES.filter(p=>p.lat).length + ' marcadores';
-
-  // Init everything
   initMap();
   initCharts();
   renderCompare();
   renderValueBars();
-  initTable();
+  // Reset estado filter
+  const sel = document.getElementById('filterEstado');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">Todos os estados</option>';
+  [...new Set(PROPERTIES.map(p=>p.estado).filter(Boolean))].sort().forEach(e => {
+    const opt = document.createElement('option');
+    opt.value = e; opt.textContent = e;
+    sel.appendChild(opt);
+  });
+  sel.value = prev;
+  filteredData = [...PROPERTIES];
+  currentPage = 1;
+  applyFilters();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('headerDate').textContent =
+    new Date().toLocaleDateString('pt-BR', {day:'2-digit', month:'long', year:'numeric'});
+
+  // Wire table sort headers & filters once
+  document.querySelectorAll('.data-table th[data-col]').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.getAttribute('data-col');
+      if (sortCol === col) { sortDir *= -1; }
+      else { sortCol = col; sortDir = -1; }
+      document.querySelectorAll('.data-table th').forEach(h => h.classList.remove('sorted'));
+      th.classList.add('sorted');
+      applyFilters();
+    });
+  });
+  document.getElementById('searchInput').addEventListener('input', applyFilters);
+  document.getElementById('filterEstado').addEventListener('change', applyFilters);
+  document.getElementById('filterTipo').addEventListener('change', applyFilters);
+  document.getElementById('filterStatus').addEventListener('change', applyFilters);
+
+  // Wire import button
+  document.getElementById('importBtn').addEventListener('click', () => {
+    document.getElementById('fileInput').click();
+  });
+  document.getElementById('fileInput').addEventListener('change', handleFileImport);
+
+  renderAll();
 });
 
 // ── MAP ───────────────────────────────────────────────────────────────
+let _leafletMap = null;
+let _markersLayer = null;
+
 function initMap() {
-  const map = L.map('map', {
-    center: [-20, -50],
-    zoom: 5,
-    zoomControl: true,
-  });
+  if (!_leafletMap) {
+    _leafletMap = L.map('map', { center: [-20, -50], zoom: 5, zoomControl: true });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '©OpenStreetMap ©CartoDB',
+      maxZoom: 18,
+    }).addTo(_leafletMap);
+    _markersLayer = L.layerGroup().addTo(_leafletMap);
+  } else {
+    _markersLayer.clearLayers();
+  }
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '©OpenStreetMap ©CartoDB',
-    maxZoom: 18,
-  }).addTo(map);
-
-  const getColor = (vm) => {
-    if (!vm || vm === 0) return '#64748b';
-    if (vm >= 10e6) return '#10b981';
-    if (vm >= 1e6) return '#3b82f6';
-    return '#f59e0b';
+  const getColor = (tipo) => {
+    if (tipo === 'Rural')  return '#10b981';
+    if (tipo === 'Urbano') return '#3b82f6';
+    return '#64748b';
   };
 
   PROPERTIES.filter(p => p.lat && p.lng).forEach(p => {
-    const color = getColor(p.vm);
+    const color = getColor(p.tipo);
     const r = Math.max(7, Math.min(22, Math.sqrt((p.vm||0)/1e6) * 3 + 7));
 
     const marker = L.circleMarker([p.lat, p.lng], {
@@ -892,7 +1035,7 @@ function initMap() {
       weight: 1.5,
       opacity: .9,
       fillOpacity: .75,
-    }).addTo(map);
+    }).addTo(_markersLayer);
 
     marker.bindPopup(`
       <div class="popup-title">${p.tipologia} &mdash; Mat. ${p.mat}</div>
@@ -902,8 +1045,7 @@ function initMap() {
       <div class="popup-row"><span>📉 VF Enforce</span><span class="popup-val">${fmt(p.vf)}</span></div>
       ${p.area ? `<div class="popup-row"><span>📐 Área</span><span class="popup-val">${fmtArea(p.area, p.unidade)}</span></div>` : ''}
       <div style="margin-top:8px;">
-        <span class="popup-chip" style="background:${color}22;color:${color};border:1px solid ${color}44">${p.localizacao}</span>
-        <span class="popup-chip" style="background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.25);margin-left:4px">${p.nivel}</span>
+        <span class="popup-chip" style="background:${color}22;color:${color};border:1px solid ${color}44">${p.tipo}</span>
       </div>
     `, { maxWidth: 260 });
   });
@@ -913,37 +1055,16 @@ function initMap() {
 Chart.defaults.color = '#64748b';
 Chart.defaults.font.family = 'Inter';
 
+let _charts = {};
+
 function initCharts() {
-  // Tipologia — ranked bar list (no color soup)
-  const tipCounts = {};
-  PROPERTIES.forEach(p => {
-    const t = p.tipologia && p.tipologia !== '—' ? p.tipologia.trim() : 'Outros';
-    tipCounts[t] = (tipCounts[t] || 0) + 1;
-  });
-  const tipSorted = Object.entries(tipCounts).sort((a,b) => b[1]-a[1]);
-  const tipMax = tipSorted[0][1];
-  const tipContainer = document.getElementById('tipologiaList');
-  document.getElementById('tipCount').textContent = tipSorted.length + ' categorias';
-  tipContainer.innerHTML = tipSorted.map(([label, count], i) => {
-    const pct = (count / tipMax * 100).toFixed(1);
-    // Single-hue palette: full blue → faded blue
-    const opacity = Math.max(0.25, 1 - i * 0.07);
-    return `
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:11px;color:var(--text-soft);width:130px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${label}">${label}</span>
-        <div style="flex:1;height:16px;background:var(--surface2);border-radius:4px;overflow:hidden;">
-          <div style="width:${pct}%;height:100%;background:rgba(59,130,246,${opacity});border-radius:4px;transition:width .8s ease;display:flex;align-items:center;padding-left:6px;">
-            ${count >= 2 ? `<span style="font-size:9px;font-weight:700;color:#fff;opacity:.9">${count}</span>` : ''}
-          </div>
-        </div>
-        <span style="font-size:12px;font-weight:700;color:var(--text);width:16px;text-align:right;flex-shrink:0">${count}</span>
-      </div>`;
-  }).join('');
-  
+  if (_charts.topVM)    { _charts.topVM.destroy();    _charts.topVM    = null; }
+  if (_charts.estados)  { _charts.estados.destroy();  _charts.estados  = null; }
+  if (_charts.tipo)     { _charts.tipo.destroy();     _charts.tipo     = null; }
 
   // Top 10 VM bar
   const top10 = [...PROPERTIES].filter(p=>p.vm>0).sort((a,b)=>b.vm-a.vm).slice(0,10);
-  new Chart(document.getElementById('chartTopVM'), {
+  _charts.topVM = new Chart(document.getElementById('chartTopVM'), {
     type: 'bar',
     data: {
       labels: top10.map(p => p.cidade.length > 12 ? p.cidade.slice(0,12)+'…' : p.cidade),
@@ -984,7 +1105,7 @@ function initCharts() {
   const estSorted = Object.entries(estadoCounts).sort((a,b)=>b[1]-a[1]);
   const estColors = { SP:'#3b82f6', PR:'#10b981', MS:'#f59e0b', SC:'#a855f7', MG:'#ef4444', RJ:'#06b6d4', GO:'#f97316' };
 
-  new Chart(document.getElementById('chartEstados'), {
+  _charts.estados = new Chart(document.getElementById('chartEstados'), {
     type: 'bar',
     data: {
       labels: estSorted.map(x=>x[0]),
@@ -1009,7 +1130,7 @@ function initCharts() {
   // Tipo Rural/Urbano doughnut
   const tipoVM = {Urbano:0, Rural:0};
   PROPERTIES.forEach(p => { if(p.vm) tipoVM[p.tipo] = (tipoVM[p.tipo]||0) + p.vm; });
-  new Chart(document.getElementById('chartTipoRuralUrbano'), {
+  _charts.tipo = new Chart(document.getElementById('chartTipoRuralUrbano'), {
     type: 'doughnut',
     data: {
       labels: ['Urbano (VM)', 'Rural (VM)'],
@@ -1032,17 +1153,27 @@ function initCharts() {
 
 // ── COMPARE BARS ──────────────────────────────────────────────────────
 function renderCompare() {
-  const top12 = [...PROPERTIES].filter(p=>p.vm>0).sort((a,b)=>b.vm-a.vm).slice(0,12);
-  const maxVal = top12[0].vm;
+  const all = [...PROPERTIES].filter(p => p.vm > 0 || p.vf > 0 || parseNum(p.tabelaGI) > 0)
+                             .sort((a, b) => b.vm - a.vm)
+                             .slice(0, 15);
+  if (!all.length) return;
+  const maxVal = Math.max(...all.map(p => Math.max(p.vm || 0, p.vf || 0, parseNum(p.tabelaGI) || 0)));
   const container = document.getElementById('compareList');
-  container.innerHTML = top12.map(p => {
-    const vmPct = (p.vm / maxVal * 100).toFixed(1);
-    const vfPct = (p.vf / maxVal * 100).toFixed(1);
+  container.innerHTML = all.map(p => {
+    const gi = parseNum(p.tabelaGI) || 0;
+    const vmPct = (( p.vm || 0) / maxVal * 100).toFixed(1);
+    const vfPct = (( p.vf || 0) / maxVal * 100).toFixed(1);
+    const giPct = (gi          / maxVal * 100).toFixed(1);
+    const giLabel = gi > 0 ? fmt(gi) : (p.tabelaGI && p.tabelaGI !== '-' ? String(p.tabelaGI) : '—');
     return `
       <div class="cmp-item">
         <div class="cmp-header">
           <span class="cmp-city">${p.tipologia} &mdash; ${p.cidade}, ${p.estado}</span>
-          <span class="cmp-values">${fmt(p.vm)} / ${fmt(p.vf)}</span>
+          <span class="cmp-values" style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
+            <span><span style="color:var(--primary);font-size:10px">VM</span> ${fmt(p.vm)}</span>
+            <span><span style="color:var(--accent);font-size:10px">VF</span> ${fmt(p.vf)}</span>
+            <span><span style="color:var(--amber);font-size:10px">GI</span> ${giLabel}</span>
+          </span>
         </div>
         <div class="cmp-bars">
           <div class="cmp-vm" style="width:${vmPct}%;flex-shrink:0"></div>
@@ -1050,6 +1181,10 @@ function renderCompare() {
         </div>
         <div class="cmp-bars" style="margin-top:2px;">
           <div class="cmp-vf" style="width:${vfPct}%;flex-shrink:0"></div>
+          <div style="flex:1;background:var(--surface2)"></div>
+        </div>
+        <div class="cmp-bars" style="margin-top:2px;">
+          <div class="cmp-gi" style="width:${giPct}%;flex-shrink:0"></div>
           <div style="flex:1;background:var(--surface2)"></div>
         </div>
       </div>`;
@@ -1125,9 +1260,8 @@ function renderTable() {
       <td><span class="num-val ${p.vm >= 5e6 ? 'large' : ''}">${fmt(p.vm)}</span></td>
       <td><span class="num-val">${fmt(p.vf)}</span></td>
       <td>${fmtArea(p.area, p.unidade)}</td>
-      <td>${nivelChip(p.nivel)}</td>
-      <td>${locChip(p.localizacao)}</td>
-      <td>${statusChip(p.status)}</td>
+      <td>${(() => { const gi = parseNum(p.tabelaGI); return gi != null ? `<span class="num-val">${fmt(gi)}</span>` : p.tabelaGI && p.tabelaGI !== '-' ? `<span style="font-size:10px;color:var(--text-muted)">${p.tabelaGI}</span>` : '<span style="color:var(--text-muted)">—</span>'; })()}</td>
+      <td><span style="color:var(--text-soft);font-size:11px">${p.obs || '—'}</span></td>
     </tr>
   `).join('');
 
@@ -1188,35 +1322,99 @@ function applyFilters() {
   renderTable();
 }
 
-function initTable() {
-  // Populate estado filter
-  const estados = [...new Set(PROPERTIES.map(p=>p.estado))].sort();
-  const sel = document.getElementById('filterEstado');
-  estados.forEach(e => {
-    const opt = document.createElement('option');
-    opt.value = e; opt.textContent = e;
-    sel.appendChild(opt);
-  });
+// ── EXCEL IMPORT ──────────────────────────────────────────────────────
+function colVal(row, ...keys) {
+  for (const k of keys) {
+    const found = Object.keys(row).find(c => c.trim().toLowerCase() === k.toLowerCase());
+    if (found !== undefined && row[found] !== null && row[found] !== '') return row[found];
+  }
+  return null;
+}
 
-  // Sort headers
-  document.querySelectorAll('.data-table th[data-col]').forEach(th => {
-    th.addEventListener('click', () => {
-      const col = th.getAttribute('data-col');
-      if (sortCol === col) { sortDir *= -1; }
-      else { sortCol = col; sortDir = -1; }
-      document.querySelectorAll('.data-table th').forEach(h => h.classList.remove('sorted'));
-      th.classList.add('sorted');
-      applyFilters();
-    });
-  });
+function parseNum(v) {
+  if (v === null || v === undefined || v === '') return null;
+  if (typeof v === 'number') return v;
+  let s = String(v).trim();
+  // Formato brasileiro: 1.000.000,50 ou 18.000.000
+  const dots  = (s.match(/\./g) || []).length;
+  const commas = (s.match(/,/g) || []).length;
+  if (dots > 1 || (dots >= 1 && commas === 0 && /\.\d{3}/.test(s))) {
+    // ponto é separador de milhar → remover pontos
+    s = s.replace(/\./g, '');
+  }
+  s = s.replace(',', '.');
+  const n = parseFloat(s.replace(/[^\d.-]/g, ''));
+  return isNaN(n) ? null : n;
+}
 
-  // Filters
-  document.getElementById('searchInput').addEventListener('input', applyFilters);
-  document.getElementById('filterEstado').addEventListener('change', applyFilters);
-  document.getElementById('filterTipo').addEventListener('change', applyFilters);
-  document.getElementById('filterStatus').addEventListener('change', applyFilters);
+function parseExcelToProperties(workbook) {
+  const sheetName = workbook.SheetNames[0];
+  const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: null });
 
-  applyFilters();
+  return rows.map(row => {
+    const mat = String(colVal(row,
+      'mat.', 'mat', 'matrícula', 'matricula', 'codigo', 'código', 'id') ?? '—').trim();
+
+    const coords = LAT_LNG_BY_MAT[mat] || {};
+
+    return {
+      mat,
+      tipologia:   String(colVal(row, 'tipologia', 'tipo do imóvel', 'tipo do imovel', 'tipo imovel') ?? '—'),
+      cidade:      String(colVal(row, 'cidade', 'municipio', 'município') ?? '—'),
+      estado:      String(colVal(row, 'estado', 'uf') ?? '—'),
+      tipo:        String(colVal(row, 'tipo', 'classificação', 'classificacao') ?? 'Urbano'),
+      vm:          parseNum(colVal(row, 'vm enforce', 'vm', 'valor avaliação', 'valor avaliacao', 'valor de mercado')) ?? 0,
+      vf:          parseNum(colVal(row, 'vf enforce', 'vf', 'valor venda forçada', 'valor venda forcada')) ?? 0,
+      area:        parseNum(colVal(row, 'área terreno', 'area terreno', 'área', 'area')),
+      unidade:     colVal(row, 'unid. área terreno', 'unid. area terreno', 'unidade', 'un', 'und'),
+      nivel:       colVal(row, 'nível', 'nivel', 'level'),
+      localizacao: colVal(row, 'resultado de localização', 'resultado de localizacao', 'localização', 'localizacao'),
+      status:      colVal(row, 'status (tarefa atual)'),
+      statusVenda: colVal(row, 'status'),
+      obs:         colVal(row, 'obs'),
+      tabelaGI:    colVal(row, 'tabela gi', 'tabelagi', 'tabela_gi', 'gi'),
+      proposta:    parseNum(colVal(row, 'proposta', 'valor proposta', 'proposta valor')),
+      lat:         parseNum(colVal(row, 'lat', 'latitude'))  ?? coords.lat ?? null,
+      lng:         parseNum(colVal(row, 'lng', 'long', 'longitude')) ?? coords.lng ?? null,
+    };
+  }).filter(p => p.mat && p.mat !== '—' && p.mat !== 'null');
+}
+
+function showToast(msg, isError = false) {
+  const t = document.getElementById('importToast');
+  t.textContent = msg;
+  t.style.borderColor = isError ? 'rgba(239,68,68,.4)' : 'rgba(16,185,129,.4)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function handleFileImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const btn = document.getElementById('importBtn');
+  btn.textContent = '⏳ Carregando...';
+  btn.classList.remove('success');
+
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try {
+      const data = new Uint8Array(evt.target.result);
+      const wb = XLSX.read(data, { type: 'array' });
+      const parsed = parseExcelToProperties(wb);
+      if (!parsed.length) throw new Error('Nenhum dado encontrado na planilha.');
+      PROPERTIES = parsed;
+      renderAll();
+      btn.textContent = '✅ ' + file.name.slice(0, 22) + (file.name.length > 22 ? '…' : '');
+      btn.classList.add('success');
+      showToast('✅ ' + parsed.length + ' imóveis carregados de ' + file.name);
+      setTimeout(() => { btn.textContent = '📂 Importar Planilha'; btn.classList.remove('success'); }, 5000);
+    } catch (err) {
+      btn.textContent = '📂 Importar Planilha';
+      showToast('❌ Erro ao ler a planilha: ' + err.message, true);
+    }
+    e.target.value = '';
+  };
+  reader.readAsArrayBuffer(file);
 }
 </script>
 </body>
