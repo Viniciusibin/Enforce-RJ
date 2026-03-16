@@ -685,6 +685,50 @@
 
   </div>
 
+  <!-- TABLE -->
+  <div class="section-title">Listagem Detalhada dos Im&oacute;veis</div>
+  <div class="card" style="margin-bottom:24px">
+    <div class="table-toolbar">
+      <input class="search-input" type="text" id="searchInput" placeholder="Buscar por cidade, tipologia, mat..." />
+      <select class="filter-select" id="filterEstado">
+        <option value="">Todos os estados</option>
+      </select>
+      <select class="filter-select" id="filterTipo">
+        <option value="">Urbano &amp; Rural</option>
+        <option value="Urbano">Urbano</option>
+        <option value="Rural">Rural</option>
+      </select>
+      <select class="filter-select" id="filterStatus">
+        <option value="">Todos os status</option>
+        <option value="Conclu&iacute;da">Conclu&iacute;da</option>
+      </select>
+      <select class="filter-select" id="tableDisplayMode">
+        <option value="paged">Paginado (10 por p&aacute;gina)</option>
+        <option value="all">Listagem completa</option>
+      </select>
+      <span class="table-count" id="tableCount"></span>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table" id="dataTable">
+        <thead>
+          <tr>
+            <th data-col="mat">Mat. <span class="sort-icon">â†•</span></th>
+            <th data-col="tipologia">Tipologia <span class="sort-icon">â†•</span></th>
+            <th data-col="cidade">Cidade / Estado <span class="sort-icon">â†•</span></th>
+            <th data-col="tipo">Tipo <span class="sort-icon">â†•</span></th>
+            <th data-col="vm_enforce">VM Enforce <span class="sort-icon">â†•</span></th>
+            <th data-col="vf_enforce">VF Enforce <span class="sort-icon">â†•</span></th>
+            <th data-col="area">Area <span class="sort-icon">â†•</span></th>
+            <th data-col="tabelaGI">Tabela GI <span class="sort-icon">â†•</span></th>
+            <th data-col="obs">Obs</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+
   <!-- MAP + DONUT -->
   <div class="section-title">Distribui&ccedil;&atilde;o Geogr&aacute;fica</div>
   <div class="card" style="margin-bottom:24px">
@@ -747,7 +791,7 @@
     </div>
   </div>
 
-  <!-- TABLE -->
+  <!-- TABLE LEGACY
   <div class="section-title">Listagem Detalhada dos Im&oacute;veis</div>
   <div class="card">
     <div class="table-toolbar">
@@ -786,6 +830,7 @@
     </div>
     <div class="pagination" id="pagination"></div>
   </div>
+  -->
 </main>
 
 <script>
@@ -1248,10 +1293,14 @@ function tipoChip(t) {
 
 function renderTable() {
   const tbody = document.getElementById('tableBody');
+  const tableDisplayMode = document.getElementById('tableDisplayMode').value;
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / PAGE_SIZE));
   const start = (currentPage - 1) * PAGE_SIZE;
-  const page = filteredData.slice(start, start + PAGE_SIZE);
+  const rows = tableDisplayMode === 'all'
+    ? filteredData
+    : filteredData.slice(start, start + PAGE_SIZE);
 
-  tbody.innerHTML = page.map(p => `
+  tbody.innerHTML = rows.map(p => `
     <tr>
       <td><span style="font-weight:600;color:var(--text)">${p.mat}</span></td>
       <td>${p.tipologia}</td>
@@ -1321,6 +1370,73 @@ function applyFilters() {
   currentPage = 1;
   renderTable();
 }
+
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  const tableDisplayMode = document.getElementById('tableDisplayMode').value;
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / PAGE_SIZE));
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const rows = tableDisplayMode === 'all'
+    ? filteredData
+    : filteredData.slice(start, start + PAGE_SIZE);
+
+  tbody.innerHTML = rows.map(p => `
+    <tr>
+      <td><span style="font-weight:600;color:var(--text)">${p.mat}</span></td>
+      <td>${p.tipologia}</td>
+      <td><span style="color:var(--text)">${p.cidade}</span><br><span style="font-size:10px;color:var(--text-muted)">${p.estado}</span></td>
+      <td>${tipoChip(p.tipo)}</td>
+      <td><span class="num-val ${p.vm >= 5e6 ? 'large' : ''}">${fmt(p.vm)}</span></td>
+      <td><span class="num-val">${fmt(p.vf)}</span></td>
+      <td>${fmtArea(p.area, p.unidade)}</td>
+      <td>${(() => { const gi = parseNum(p.tabelaGI); return gi != null ? `<span class="num-val">${fmt(gi)}</span>` : p.tabelaGI && p.tabelaGI !== '-' ? `<span style="font-size:10px;color:var(--text-muted)">${p.tabelaGI}</span>` : '<span style="color:var(--text-muted)">â€”</span>'; })()}</td>
+      <td><span style="color:var(--text-soft);font-size:11px">${p.obs || 'â€”'}</span></td>
+    </tr>
+  `).join('') || `<tr><td colspan="9" style="text-align:center;color:var(--text-muted)">Nenhum im&oacute;vel encontrado.</td></tr>`;
+
+  document.getElementById('tableCount').textContent = tableDisplayMode === 'all'
+    ? `${filteredData.length} imÃ³veis • listagem completa`
+    : `${filteredData.length} imÃ³veis • pÃ¡gina ${currentPage} de ${totalPages}`;
+
+  renderPagination();
+}
+
+function renderPagination() {
+  const pg = document.getElementById('pagination');
+  const tableDisplayMode = document.getElementById('tableDisplayMode').value;
+  if (tableDisplayMode === 'all') {
+    pg.style.display = 'none';
+    pg.innerHTML = '';
+    return;
+  }
+
+  pg.style.display = 'flex';
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / PAGE_SIZE));
+  let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>â† Ant.</button>`;
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
+      html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+    } else if (Math.abs(i - currentPage) === 2) {
+      html += `<span style="color:var(--text-muted);padding:0 4px">â€¦</span>`;
+    }
+  }
+  html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>PrÃ³x. â†’</button>`;
+  pg.innerHTML = html;
+}
+
+function goPage(n) {
+  if (document.getElementById('tableDisplayMode').value === 'all') return;
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / PAGE_SIZE));
+  currentPage = Math.max(1, Math.min(n, totalPages));
+  renderTable();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('tableDisplayMode').addEventListener('change', () => {
+    currentPage = 1;
+    renderTable();
+  });
+});
 
 // ── EXCEL IMPORT ──────────────────────────────────────────────────────
 function colVal(row, ...keys) {
