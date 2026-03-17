@@ -755,6 +755,29 @@
 
   </div>
 
+  <!-- TABELA DE VENDAS -->
+  <div class="section-title">Listagem das Vendas</div>
+  <div class="card" style="margin-bottom:24px;overflow-x:auto">
+    <table class="sold-table" id="salesTable">
+      <thead>
+        <tr>
+          <th>Mat.</th>
+          <th>Tipologia</th>
+          <th>Cidade / UF</th>
+          <th>Tipo</th>
+          <th style="text-align:right">VM Enforce</th>
+          <th style="text-align:right">VF Enforce</th>
+          <th style="text-align:right">Proposta</th>
+          <th>Status</th>
+          <th>Comprador</th>
+          <th>Prev. Registro</th>
+          <th>Obs</th>
+        </tr>
+      </thead>
+      <tbody id="salesTableBody"></tbody>
+    </table>
+  </div>
+
   <!-- TABLE -->
   <div class="section-title">Listagem Detalhada dos Im&oacute;veis</div>
   <div class="card" style="margin-bottom:24px">
@@ -840,19 +863,8 @@
     </div>
   </div>
 
-  <!-- VM vs VF comparison bars -->
+  <!-- Imóveis por Tipo (row separado) -->
   <div class="row-2col">
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">📈 VM vs. VF vs. Tabela GI &mdash; Top 15 Im&oacute;veis</span>
-        <div style="display:flex;gap:12px;font-size:11px;align-items:center">
-          <span style="display:flex;align-items:center;gap:4px;color:var(--text-soft)"><div style="width:10px;height:4px;background:var(--primary);border-radius:2px"></div>VM</span>
-          <span style="display:flex;align-items:center;gap:4px;color:var(--text-soft)"><div style="width:10px;height:4px;background:var(--accent);border-radius:2px"></div>VF</span>
-          <span style="display:flex;align-items:center;gap:4px;color:var(--text-soft)"><div style="width:10px;height:4px;background:var(--amber);border-radius:2px"></div>Tabela GI</span>
-        </div>
-      </div>
-      <div class="compare-row" id="compareList"></div>
-    </div>
     <div class="card">
       <div class="card-header">
         <span class="card-title">🕒 Im&oacute;veis por Tipo</span>
@@ -864,6 +876,20 @@
         <div class="value-bar-list" id="valueBarList"></div>
       </div>
     </div>
+  </div>
+
+  <!-- VM vs VF comparison bars — full width -->
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-header">
+      <span class="card-title">📈 VM vs. VF vs. Tabela GI &mdash; Top 15 Im&oacute;veis</span>
+      <div style="display:flex;gap:12px;font-size:11px;align-items:center;flex-wrap:wrap">
+        <span style="display:flex;align-items:center;gap:4px;color:var(--text-soft)"><div style="width:10px;height:4px;background:var(--primary);border-radius:2px"></div>VM</span>
+        <span style="display:flex;align-items:center;gap:4px;color:var(--text-soft)"><div style="width:10px;height:4px;background:var(--accent);border-radius:2px"></div>VF</span>
+        <span style="display:flex;align-items:center;gap:4px;color:var(--text-soft)"><div style="width:10px;height:4px;background:var(--amber);border-radius:2px"></div>Tabela GI</span>
+        <span style="display:flex;align-items:center;gap:4px;color:var(--text-soft)"><div style="width:10px;height:4px;background:#ef4444;border-radius:2px"></div>Proposta</span>
+      </div>
+    </div>
+    <div class="compare-row" id="compareList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px"></div>
   </div>
 
 </main>
@@ -923,7 +949,7 @@
 // ── DATA ─────────────────────────────────────────────────────────────
 let PROPERTIES = [
   {mat:"8112",  tipologia:"Galpão",             cidade:"Santos",                estado:"SP",tipo:"Urbano",vm:21201520,   vf:15901140,   area:42000,   unidade:"m²",lat:-23.9618,lng:-46.3322,statusVenda:"Não Vendido",   obs:"-",                                          tabelaGI:25000000,  proposta:null},
-  {mat:"1756",  tipologia:"Agroindustria",       cidade:"Assis Chateaubriand",  estado:"PR",tipo:"Rural", vm:15039375,   vf:13197052,   area:13587.75,unidade:"ha",lat:-24.4167,lng:-53.5167,statusVenda:"Proposta em Negociação",obs:"Aguardando formalização",          tabelaGI:null,      proposta:11000000, previsaoRegistro:"26/03/2026"},
+  {mat:"1756",  tipologia:"Agroindustria",       cidade:"Assis Chateaubriand",  estado:"PR",tipo:"Rural", vm:15039375,   vf:13197052,   area:13587.75,unidade:"ha",lat:-24.4167,lng:-53.5167,statusVenda:"Vendido",              obs:"Vendido — Indenização (MATS 1.756, 1.757, 1.758 E 1.759)",tabelaGI:null,proposta:3000000,  previsaoRegistro:"12/01/2026"},
   {mat:"25510", tipologia:"Agroindustria",       cidade:"Dourados",             estado:"MS",tipo:"Rural", vm:13155059,   vf:11395570,   area:7.26,    unidade:"ha",lat:-22.2212,lng:-54.8055,statusVenda:"Não Vendido",   obs:"Em aprovação (comitê)",                   tabelaGI:null,      proposta:13000000, previsaoRegistro:"26/03/2026"},
   {mat:"58840", tipologia:"Prédio Comercial",    cidade:"Vargem Grande Paulista",estado:"SP",tipo:"Urbano",vm:13145579,  vf:10516463,   area:1407,    unidade:"m²",lat:-23.6019,lng:-47.0300,statusVenda:"Proposta em Negociação",obs:"Proposta distante",               tabelaGI:45000000,  proposta:6000000,  previsaoRegistro:"01/07/2026"},
   {mat:"23697", tipologia:"Agroindustria",       cidade:"—",                    estado:"PR",tipo:"Rural", vm:14301000,   vf:9790000,    area:null,    unidade:null,lat:-23.4208,lng:-51.9331,statusVenda:"Vendido",        obs:"Vendido (Integrada)",                    tabelaGI:null,      proposta:26000000, comprador:"Cooperativa INTEGRADA"},
@@ -933,7 +959,7 @@ let PROPERTIES = [
   {mat:"10565", tipologia:"Agroindustria",       cidade:"Fátima do Sul",        estado:"MS",tipo:"Rural", vm:6971320,    vf:5594484,    area:13.43,   unidade:"ha",lat:-22.5107,lng:-54.0507,statusVenda:"Não Vendido",   obs:"Sem proposta",                           tabelaGI:null,      proposta:null},
   {mat:"145993",tipologia:"Gleba",               cidade:"Dourados",             estado:"MS",tipo:"Rural", vm:6108735,    vf:4956143,    area:87.83,   unidade:"ha",lat:-22.2512,lng:-54.7755,statusVenda:"Não Vendido",   obs:"Negociação em andamento",               tabelaGI:null,      proposta:null,     previsaoRegistro:"25/05/2026"},
   {mat:"6896",  tipologia:"Terreno",             cidade:"Maringá",              estado:"PR",tipo:"Urbano",vm:6875426,    vf:4881552,    area:15000,   unidade:"m²",lat:-23.4205,lng:-51.9333,statusVenda:"Vendido",        obs:"Vendido",                                tabelaGI:18000000,  proposta:18000000, comprador:"MC Incorporações",        previsaoRegistro:"01/07/2026"},
-  {mat:"1615",  tipologia:"Agroindustria",       cidade:"Canoinhas",            estado:"SC",tipo:"Rural", vm:5570395,    vf:4741799,    area:32920,   unidade:"ha",lat:-26.1786,lng:-50.3917,statusVenda:"Proposta em Fase de Minuta",obs:"Em minuta",              tabelaGI:null,      proposta:7000000,  comprador:"Cooperativa Agricola de Canoinhas",previsaoRegistro:"13/04/2026"},
+  {mat:"1615",  tipologia:"Agroindustria",       cidade:"Canoinhas",            estado:"SC",tipo:"Rural", vm:5570395,    vf:4741799,    area:32920,   unidade:"ha",lat:-26.1786,lng:-50.3917,statusVenda:"Vendido",              obs:"Vendido (Cooperativa Agricola de Canoinhas)",tabelaGI:null,proposta:7000000,comprador:"Cooperativa Agricola de Canoinhas",previsaoRegistro:"13/04/2026"},
   {mat:"146005",tipologia:"Gleba",               cidade:"Dourados",             estado:"MS",tipo:"Rural", vm:5325769,    vf:4320907,    area:86.67,   unidade:"ha",lat:-22.2012,lng:-54.8355,statusVenda:"Não Vendido",   obs:"Negociação em andamento",               tabelaGI:null,      proposta:null,     previsaoRegistro:"25/05/2026"},
   {mat:"4479",  tipologia:"Agroindustria",       cidade:"Mauá da Serra",        estado:"PR",tipo:"Rural", vm:4986949,    vf:4319945,    area:27104,   unidade:"ha",lat:-23.9000,lng:-51.2500,statusVenda:"Vendido",        obs:"Vendido (Integrada)",                    tabelaGI:null,      proposta:null,     comprador:"Cooperativa INTEGRADA"},
   {mat:"9846",  tipologia:"Agroindustria",       cidade:"Floraí",               estado:"PR",tipo:"Rural", vm:4279250,    vf:3803183,    area:17430,   unidade:"ha",lat:-23.3156,lng:-52.2744,statusVenda:"Vendido",        obs:"Vendido (Integrada)",                    tabelaGI:null,      proposta:null,     comprador:"Cooperativa INTEGRADA",   previsaoRegistro:"02/10/2026"},
@@ -973,12 +999,11 @@ let FLUXO = {
   totalRecebido: 21800000,
   totalRemanescente: 38464568.16,
   linhas: [
-    { mat: '6.896',                              recebido: 5400000,   remanescente: 12600000,    dataBaixa: '05/11/2025', criterio: '30% à vista e restante pago na data da escritura sem correção' },
-    { mat: '579',                                recebido: 40000,     remanescente: null,         dataBaixa: '30/10/2025', criterio: '' },
-    { mat: '579',                                recebido: 860000,    remanescente: null,         dataBaixa: '31/10/2025', criterio: '' },
-    { mat: '1.479, 6.193, 23.697, 9.846, 5.377',recebido: 10400000,  remanescente: 20964568.16,  dataBaixa: '02/01/2016', criterio: '+ 3 parcelas anuais de R$ 5.200.000,00 corrigidas a CDI + 1,5% a.a' },
-    { mat: '1615',                               recebido: 2100000,   remanescente: 4900000,      dataBaixa: '13/03/2026', criterio: '30% à vista e restante pago na data da escritura com correção CDI' },
-    { mat: 'MATS 1.756, 1.757, 1.758 E 1.759*', recebido: 3000000,   remanescente: null,         dataBaixa: '12/01/2026', criterio: 'Indenização relacionada a depreciação de imóvel adjudicado' },
+    { mat: '6.896',                              recebido: 5400000,  remanescente: 12600000,    dataBaixa: '05/11/2025', criterio: '30% à vista e restante pago na data da escritura sem correção',        comprador: 'MC Incorporações',                 valorVenda: 18000000 },
+    { mat: '579',                                recebido: 900000,   remanescente: null,         dataBaixa: '30/10/2025 e 31/10/2025', criterio: '',                                                       comprador: 'Eucamed',                          valorVenda: 900000   },
+    { mat: '1.479, 6.193, 23.697, 9.846, 5.377',recebido: 10400000, remanescente: 20964568.16,  dataBaixa: '02/01/2016', criterio: '+ 3 parcelas anuais de R$ 5.200.000,00 corrigidas a CDI + 1,5% a.a', comprador: 'Cooperativa INTEGRADA',            valorVenda: 26000000 },
+    { mat: '1615',                               recebido: 2100000,  remanescente: 4900000,      dataBaixa: '13/03/2026', criterio: '30% à vista e restante pago na data da escritura com correção CDI',   comprador: 'Cooperativa Agricola de Canoinhas',valorVenda: 7000000  },
+    { mat: '1.756, 1.757, 1.758 E 1.759',        recebido: 3000000,  remanescente: null,         dataBaixa: '12/01/2026', criterio: 'Indenização relacionada a depreciação de imóvel adjudicado',          comprador: '—',                                valorVenda: 3000000  },
   ]
 };
 
@@ -1101,6 +1126,7 @@ function renderAll() {
   initCharts();
   renderCompare();
   renderValueBars();
+  renderSalesTable();
   // Reset estado filter
   const sel = document.getElementById('filterEstado');
   const prev = sel.value;
@@ -1306,14 +1332,22 @@ function renderCompare() {
                              .sort((a, b) => b.vm - a.vm)
                              .slice(0, 15);
   if (!all.length) return;
-  const maxVal = Math.max(...all.map(p => Math.max(p.vm || 0, p.vf || 0, parseNum(p.tabelaGI) || 0)));
+  const maxVal = Math.max(...all.map(p => Math.max(p.vm || 0, p.vf || 0, parseNum(p.tabelaGI) || 0, p.proposta || 0)));
   const container = document.getElementById('compareList');
   container.innerHTML = all.map(p => {
-    const gi = parseNum(p.tabelaGI) || 0;
-    const vmPct = (( p.vm || 0) / maxVal * 100).toFixed(1);
-    const vfPct = (( p.vf || 0) / maxVal * 100).toFixed(1);
-    const giPct = (gi          / maxVal * 100).toFixed(1);
+    const gi       = parseNum(p.tabelaGI) || 0;
+    const proposta = p.proposta || 0;
+    const vmPct  = ((p.vm || 0) / maxVal * 100).toFixed(1);
+    const vfPct  = ((p.vf || 0) / maxVal * 100).toFixed(1);
+    const giPct  = (gi           / maxVal * 100).toFixed(1);
+    const proPct = (proposta      / maxVal * 100).toFixed(1);
     const giLabel = gi > 0 ? fmt(gi) : (p.tabelaGI && p.tabelaGI !== '-' ? String(p.tabelaGI) : '—');
+    const proRow = proposta > 0 ? `
+        <div class="cmp-bars" style="margin-top:2px;">
+          <div style="width:${proPct}%;flex-shrink:0;height:100%;background:#ef4444;border-radius:3px"></div>
+          <div style="flex:1;background:var(--surface2)"></div>
+        </div>` : '';
+    const proVal = proposta > 0 ? `<span><span style="color:#ef4444;font-size:10px">Prop</span> ${fmt(proposta)}</span>` : '';
     return `
       <div class="cmp-item">
         <div class="cmp-header">
@@ -1322,6 +1356,7 @@ function renderCompare() {
             <span><span style="color:var(--primary);font-size:10px">VM</span> ${fmt(p.vm)}</span>
             <span><span style="color:var(--accent);font-size:10px">VF</span> ${fmt(p.vf)}</span>
             <span><span style="color:var(--amber);font-size:10px">GI</span> ${giLabel}</span>
+            ${proVal}
           </span>
         </div>
         <div class="cmp-bars">
@@ -1336,6 +1371,7 @@ function renderCompare() {
           <div class="cmp-gi" style="width:${giPct}%;flex-shrink:0"></div>
           <div style="flex:1;background:var(--surface2)"></div>
         </div>
+        ${proRow}
       </div>`;
   }).join('');
 }
@@ -1361,6 +1397,46 @@ function renderValueBars() {
       </div>
     </div>
   `).join('');
+}
+
+// ── SALES TABLE ───────────────────────────────────────────────────────
+function renderSalesTable() {
+  const salesStatuses = ['vendido', 'proposta em negociação', 'proposta em fase de minuta'];
+  const rows = PROPERTIES.filter(p => {
+    const sv = (p.statusVenda || '').trim().toLowerCase();
+    return salesStatuses.includes(sv) || !!SALES[p.mat];
+  }).sort((a, b) => {
+    // Vendidos primeiro, depois propostas
+    const order = { 'vendido': 0, 'proposta em fase de minuta': 1, 'proposta em negociação': 2 };
+    const ao = order[(a.statusVenda||'').trim().toLowerCase()] ?? 3;
+    const bo = order[(b.statusVenda||'').trim().toLowerCase()] ?? 3;
+    return ao !== bo ? ao - bo : (b.proposta||0) - (a.proposta||0);
+  });
+
+  const statusColor = (sv) => {
+    const s = (sv||'').trim().toLowerCase();
+    if (s === 'vendido') return '<span class="chip chip-green" style="font-size:10px">Vendido</span>';
+    if (s === 'proposta em fase de minuta') return '<span class="chip chip-amber" style="font-size:10px">Fase de Minuta</span>';
+    if (s === 'proposta em negociação') return '<span class="chip" style="background:rgba(59,130,246,.15);color:#60a5fa;font-size:10px">Em Negociação</span>';
+    return `<span class="chip chip-gray" style="font-size:10px">${sv||'—'}</span>`;
+  };
+
+  document.getElementById('salesTableBody').innerHTML = rows.map(p => {
+    const proposta = p.proposta || 0;
+    return `<tr>
+      <td style="font-weight:600;color:var(--text)">${p.mat}</td>
+      <td>${p.tipologia}</td>
+      <td><span style="color:var(--text)">${p.cidade}</span> <span style="color:var(--text-muted);font-size:10px">${p.estado}</span></td>
+      <td>${p.tipo === 'Rural' ? '<span class="chip chip-green" style="font-size:10px">Rural</span>' : '<span class="chip chip-blue" style="font-size:10px">Urbano</span>'}</td>
+      <td style="text-align:right"><span class="num-val">${fmt(p.vm)}</span></td>
+      <td style="text-align:right"><span class="num-val">${fmt(p.vf)}</span></td>
+      <td style="text-align:right"><span class="num-val" style="color:var(--green)">${proposta > 0 ? fmt(proposta) : '—'}</span></td>
+      <td>${statusColor(p.statusVenda)}</td>
+      <td style="font-size:11px;color:var(--text-soft)">${p.comprador || '—'}</td>
+      <td style="font-size:11px;color:var(--text-soft);white-space:nowrap">${p.previsaoRegistro || '—'}</td>
+      <td style="font-size:11px;color:var(--text-muted)">${p.obs || '—'}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="11" style="text-align:center;color:var(--text-muted)">Nenhuma venda encontrada.</td></tr>`;
 }
 
 // ── TABLE ─────────────────────────────────────────────────────────────
@@ -1658,10 +1734,12 @@ function openModalFluxo() {
   const rows = f.linhas.map(l => `
     <tr>
       <td style="font-weight:600;color:var(--text);white-space:nowrap">${l.mat}</td>
+      <td class="cf-num"><span style="color:var(--primary);font-weight:600">${fmtBR(l.valorVenda)}</span></td>
       <td class="cf-num"><span style="color:var(--green);font-weight:700">${fmtBR(l.recebido)}</span></td>
       <td style="white-space:nowrap">${l.dataBaixa}</td>
       <td class="cf-num">${l.remanescente ? `<span style="color:var(--amber);font-weight:600">${fmtBR(l.remanescente)}</span>` : '<span style="color:var(--text-muted)">—</span>'}</td>
-      <td style="font-size:11px;color:var(--text-soft);max-width:280px">${l.criterio || '—'}</td>
+      <td style="font-size:11px;color:var(--text-soft);max-width:260px">${l.criterio || '—'}</td>
+      <td style="font-size:11px;color:var(--text-soft);white-space:nowrap">${l.comprador || '—'}</td>
     </tr>`).join('');
 
   document.getElementById('fluxoContent').innerHTML = `
@@ -1680,20 +1758,23 @@ function openModalFluxo() {
         <thead>
           <tr>
             <th>MAT</th>
+            <th class="cf-num">Valor de Venda</th>
             <th class="cf-num">R$ Recebido</th>
             <th>Data Baixa</th>
             <th class="cf-num">R$ Remanescente</th>
             <th>Critérios Remanescente</th>
+            <th>Comprador</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
         <tfoot>
           <tr class="cf-total">
             <td style="font-weight:700">TOTAL</td>
+            <td></td>
             <td class="cf-num cf-highlight">${fmtBR(f.totalRecebido)}</td>
             <td></td>
             <td class="cf-num" style="color:var(--amber);font-weight:700">${fmtBR(f.totalRemanescente)}</td>
-            <td></td>
+            <td colspan="2"></td>
           </tr>
         </tfoot>
       </table>
