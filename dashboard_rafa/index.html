@@ -1659,8 +1659,8 @@ function openModalFluxo() {
     <tr>
       <td style="font-weight:600;color:var(--text);white-space:nowrap">${l.mat}</td>
       <td class="cf-num"><span style="color:var(--green);font-weight:700">${fmtBR(l.recebido)}</span></td>
-      <td class="cf-num">${l.remanescente ? `<span style="color:var(--amber);font-weight:600">${fmtBR(l.remanescente)}</span>` : '<span style="color:var(--text-muted)">—</span>'}</td>
       <td style="white-space:nowrap">${l.dataBaixa}</td>
+      <td class="cf-num">${l.remanescente ? `<span style="color:var(--amber);font-weight:600">${fmtBR(l.remanescente)}</span>` : '<span style="color:var(--text-muted)">—</span>'}</td>
       <td style="font-size:11px;color:var(--text-soft);max-width:280px">${l.criterio || '—'}</td>
     </tr>`).join('');
 
@@ -1681,8 +1681,8 @@ function openModalFluxo() {
           <tr>
             <th>MAT</th>
             <th class="cf-num">R$ Recebido</th>
-            <th class="cf-num">R$ Remanescente</th>
             <th>Data Baixa</th>
+            <th class="cf-num">R$ Remanescente</th>
             <th>Critérios Remanescente</th>
           </tr>
         </thead>
@@ -1691,8 +1691,9 @@ function openModalFluxo() {
           <tr class="cf-total">
             <td style="font-weight:700">TOTAL</td>
             <td class="cf-num cf-highlight">${fmtBR(f.totalRecebido)}</td>
+            <td></td>
             <td class="cf-num" style="color:var(--amber);font-weight:700">${fmtBR(f.totalRemanescente)}</td>
-            <td colspan="2"></td>
+            <td></td>
           </tr>
         </tfoot>
       </table>
