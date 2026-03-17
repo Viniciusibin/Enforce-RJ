@@ -108,6 +108,80 @@
       font-size: 12px;
       color: var(--text-muted);
     }
+    /* ── MODALS ─────────────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.65);
+      backdrop-filter: blur(4px);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      width: 100%;
+      max-width: 1100px;
+      max-height: 92vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 64px rgba(0,0,0,.6);
+      animation: modalIn .22s cubic-bezier(.4,0,.2,1);
+    }
+    @keyframes modalIn {
+      from { opacity:0; transform:scale(.96) translateY(10px); }
+      to   { opacity:1; transform:scale(1)  translateY(0); }
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 28px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-title { font-size: 16px; font-weight: 700; }
+    .modal-close {
+      background: none; border: none; color: var(--text-muted);
+      font-size: 22px; cursor: pointer; line-height: 1; padding: 4px 8px;
+      border-radius: 6px; transition: background .15s, color .15s;
+    }
+    .modal-close:hover { background: var(--surface2); color: var(--text); }
+    .modal-body { padding: 24px 28px 28px; }
+
+    /* sold table inside modal */
+    .sold-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .sold-table th {
+      text-align: left; padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted); font-weight: 600;
+      font-size: 10px; text-transform: uppercase; letter-spacing: .06em;
+    }
+    .sold-table td { padding: 10px 10px; border-bottom: 1px solid rgba(30,48,82,.5); }
+    .sold-table tr:last-child td { border-bottom: none; }
+    .sold-table tr:hover td { background: var(--surface2); }
+    .sold-total-row td { border-top: 2px solid var(--border); font-weight: 700; padding-top: 12px; }
+
+    /* cashflow table inside modal */
+    .cf-wrap { overflow-x: auto; }
+    .cf-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 620px; }
+    .cf-table th {
+      padding: 9px 12px; background: var(--surface2);
+      color: var(--text-muted); font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .06em;
+      border-bottom: 1px solid var(--border);
+    }
+    .cf-table td { padding: 10px 12px; border-bottom: 1px solid rgba(30,48,82,.45); }
+    .cf-table tr.cf-sinal td { color: var(--amber); font-weight: 600; }
+    .cf-table tr.cf-total td { border-top: 2px solid var(--border); font-weight: 700; background: var(--surface2); }
+    .cf-table tr:hover:not(.cf-total) td { background: rgba(255,255,255,.03); }
+    .cf-num { text-align: right; font-variant-numeric: tabular-nums; }
+    .cf-highlight { color: var(--green); font-weight: 700; }
+    .cf-neg { color: var(--red); }
+
     .import-btn {
       display: flex;
       align-items: center;
@@ -649,23 +723,19 @@
   <div class="section-title">Status de Venda</div>
   <div class="kpi-grid">
 
-    <div class="kpi-card green">
-      <div class="kpi-icon">🏷️</div>
-      <div class="kpi-value" id="kpiVendidos">—</div>
-      <div class="kpi-label">Im&oacute;veis Vendidos</div>
+    <div class="kpi-card cyan" id="cardValorVendido" style="cursor:pointer" title="Clique para ver detalhes">
+      <div class="kpi-icon">💵</div>
+      <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+        <div class="kpi-value" id="kpiValorVendido">—</div>
+        <div style="font-size:13px;font-weight:700;color:#34d399" id="kpiVendidosInline">—</div>
+      </div>
+      <div class="kpi-label">Valor Total Vendido</div>
       <div class="kpi-sub">
-        <span class="kpi-badge" id="kpiVendidosPct">—</span>&nbsp;do portfolio
+        <span class="kpi-badge" id="kpiVendidosPct">—</span>&nbsp;do portfolio &bull; <span style="color:#06b6d4">ver im&oacute;veis ↗</span>
       </div>
       <div class="sale-progress-bar">
         <div class="sale-progress-fill green-fill" id="kpiVendidosBar" style="width:0%"></div>
       </div>
-    </div>
-
-    <div class="kpi-card cyan">
-      <div class="kpi-icon">💵</div>
-      <div class="kpi-value" id="kpiValorVendido">—</div>
-      <div class="kpi-label">Valor Total Vendido</div>
-      <div class="kpi-sub">Soma Tabela GI (propostas)</div>
     </div>
 
     <div class="kpi-card orange">
@@ -675,11 +745,11 @@
       <div class="kpi-sub">VF Total &minus; Valor Vendido</div>
     </div>
 
-    <div class="kpi-card blue">
-      <div class="kpi-icon">🏢</div>
+    <div class="kpi-card blue" id="cardRecebido" style="cursor:pointer" title="Clique para ver fluxo">
+      <div class="kpi-icon">💰</div>
       <div class="kpi-value" id="kpiRecebido">—</div>
-      <div class="kpi-label">Valor Gest&atilde;o Imobili&aacute;ria</div>
-      <div class="kpi-sub">Soma Tabela GI (portfolio)</div>
+      <div class="kpi-label">Valor Recebido</div>
+      <div class="kpi-sub">Fluxo confirmado &bull; <span style="color:#93c5fd">ver fluxo ↗</span></div>
     </div>
 
 
@@ -698,9 +768,12 @@
         <option value="Urbano">Urbano</option>
         <option value="Rural">Rural</option>
       </select>
-      <select class="filter-select" id="filterStatus">
-        <option value="">Todos os status</option>
-        <option value="Conclu&iacute;da">Conclu&iacute;da</option>
+      <select class="filter-select" id="filterStatusVenda">
+        <option value="">Todos</option>
+        <option value="Vendido">Vendido</option>
+        <option value="N&atilde;o Vendido">N&atilde;o Vendido</option>
+        <option value="Proposta em Negocia&ccedil;&atilde;o">Proposta em Negocia&ccedil;&atilde;o</option>
+        <option value="Proposta em Fase de Minuta">Proposta em Fase de Minuta</option>
       </select>
       <select class="filter-select" id="tableDisplayMode">
         <option value="paged">Paginado (10 por p&aacute;gina)</option>
@@ -712,14 +785,16 @@
       <table class="data-table" id="dataTable">
         <thead>
           <tr>
-            <th data-col="mat">Mat. <span class="sort-icon">â†•</span></th>
-            <th data-col="tipologia">Tipologia <span class="sort-icon">â†•</span></th>
-            <th data-col="cidade">Cidade / Estado <span class="sort-icon">â†•</span></th>
-            <th data-col="tipo">Tipo <span class="sort-icon">â†•</span></th>
-            <th data-col="vm_enforce">VM Enforce <span class="sort-icon">â†•</span></th>
-            <th data-col="vf_enforce">VF Enforce <span class="sort-icon">â†•</span></th>
-            <th data-col="area">Area <span class="sort-icon">â†•</span></th>
-            <th data-col="tabelaGI">Tabela GI <span class="sort-icon">â†•</span></th>
+            <th data-col="mat">Mat. <span class="sort-icon">←•</span></th>
+            <th data-col="tipologia">Tipologia <span class="sort-icon">←•</span></th>
+            <th data-col="cidade">Cidade / Estado <span class="sort-icon">←•</span></th>
+            <th data-col="tipo">Tipo <span class="sort-icon">←•</span></th>
+            <th data-col="vm_enforce">VM Enforce <span class="sort-icon">←•</span></th>
+            <th data-col="vf_enforce">VF Enforce <span class="sort-icon">←•</span></th>
+            <th data-col="area">Area <span class="sort-icon">←•</span></th>
+            <th data-col="tabelaGI">Tabela GI <span class="sort-icon">←•</span></th>
+            <th data-col="comprador">Comprador <span class="sort-icon">←•</span></th>
+            <th data-col="previsaoRegistro">Previsão de Registro <span class="sort-icon">←•</span></th>
             <th data-col="obs">Obs</th>
           </tr>
         </thead>
@@ -791,98 +866,125 @@
     </div>
   </div>
 
-  <!-- TABLE LEGACY
-  <div class="section-title">Listagem Detalhada dos Im&oacute;veis</div>
-  <div class="card">
-    <div class="table-toolbar">
-      <input class="search-input" type="text" id="searchInput" placeholder="Buscar por cidade, tipologia, mat..." />
-      <select class="filter-select" id="filterEstado">
-        <option value="">Todos os estados</option>
-      </select>
-      <select class="filter-select" id="filterTipo">
-        <option value="">Urbano &amp; Rural</option>
-        <option value="Urbano">Urbano</option>
-        <option value="Rural">Rural</option>
-      </select>
-      <select class="filter-select" id="filterStatus">
-        <option value="">Todos os status</option>
-        <option value="Conclu&iacute;da">Conclu&iacute;da</option>
-      </select>
-      <span class="table-count" id="tableCount"></span>
+</main>
+
+<!-- MODAL: Imóveis Vendidos -->
+<div class="modal-overlay" id="modalVendidos">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">🏷️ Im&oacute;veis Vendidos</span>
+      <button class="modal-close" onclick="document.getElementById('modalVendidos').classList.remove('open')">✕</button>
     </div>
-    <div class="table-scroll">
-      <table class="data-table" id="dataTable">
+    <div class="modal-body">
+      <table class="sold-table">
         <thead>
           <tr>
-            <th data-col="mat">Mat. <span class="sort-icon">↕</span></th>
-            <th data-col="tipologia">Tipologia <span class="sort-icon">↕</span></th>
-            <th data-col="cidade">Cidade / Estado <span class="sort-icon">↕</span></th>
-            <th data-col="tipo">Tipo <span class="sort-icon">↕</span></th>
-            <th data-col="vm_enforce">VM Enforce <span class="sort-icon">↕</span></th>
-            <th data-col="vf_enforce">VF Enforce <span class="sort-icon">↕</span></th>
-            <th data-col="area">Area <span class="sort-icon">↕</span></th>
-            <th data-col="tabelaGI">Tabela GI <span class="sort-icon">↕</span></th>
-            <th data-col="obs">Obs</th>
+            <th>Mat.</th>
+            <th>Tipologia</th>
+            <th>Cidade / UF</th>
+            <th>Tipo</th>
+            <th style="text-align:right">VM Enforce</th>
+            <th style="text-align:right">VF Enforce</th>
+            <th style="text-align:right">Proposta</th>
+            <th>Comprador</th>
+            <th>Previsão de Registro</th>
+            <th>Obs</th>
           </tr>
         </thead>
-        <tbody id="tableBody"></tbody>
+        <tbody id="soldTableBody"></tbody>
+        <tfoot>
+          <tr class="sold-total-row">
+            <td colspan="6" style="color:var(--text-muted)">TOTAL</td>
+            <td style="text-align:right;color:var(--green)" id="soldTotalGI"></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+        </tfoot>
       </table>
     </div>
-    <div class="pagination" id="pagination"></div>
   </div>
-  -->
-</main>
+</div>
+
+<!-- MODAL: Fluxo de Recebimento -->
+<div class="modal-overlay" id="modalFluxo">
+  <div class="modal-box" style="max-width:1100px">
+    <div class="modal-header">
+      <span class="modal-title">💰 Fluxo de Recebimento</span>
+      <button class="modal-close" onclick="document.getElementById('modalFluxo').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="fluxoContent"></div>
+    </div>
+  </div>
+</div>
 
 <script>
 // ── DATA ─────────────────────────────────────────────────────────────
 let PROPERTIES = [
   {mat:"8112",tipologia:"Galpão",cidade:"Santos",estado:"SP",tipo:"Urbano",vm:21201520,vf:15901140,area:42000,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.9618,lng:-46.3322},
-  {mat:"1756",tipologia:"Agroindustria",cidade:"Assis Chateaubriand",estado:"PR",tipo:"Rural",vm:15039375,vf:13197052,area:13587.75,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-24.4167,lng:-53.5167},
-  {mat:"25510",tipologia:"Agroindustria",cidade:"Dourados",estado:"MS",tipo:"Rural",vm:13155059,vf:11395570,area:7.26,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-22.2212,lng:-54.8055},
-  {mat:"58840",tipologia:"Prédio Comercial",cidade:"Vargem Grande Paulista",estado:"SP",tipo:"Urbano",vm:13145579,vf:10516463,area:1407,unidade:"m²",nivel:"Nível 0",localizacao:"Parcialmente Localizado",status:"Concluída",lat:-23.6019,lng:-47.0300},
-  {mat:"23697",tipologia:"Agroindustria",cidade:"PR",estado:"PR",tipo:"Rural",vm:14301000,vf:9790000,area:null,unidade:null,nivel:"Laudo - Lid.",localizacao:"Não disponível",status:"Pendente",lat:-23.4208,lng:-51.9331},
-  {mat:"39606",tipologia:"Prédio Comercial",cidade:"Jacareí",estado:"SP",tipo:"Urbano",vm:8836364,vf:7883985,area:3250,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.2947,lng:-45.9653},
+  {mat:"1756",tipologia:"Agroindustria",cidade:"Assis Chateaubriand",estado:"PR",tipo:"Rural",vm:15039375,vf:13197052,area:13587.75,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-24.4167,lng:-53.5167,previsaoRegistro:"26/03/2026"},
+  {mat:"25510",tipologia:"Agroindustria",cidade:"Dourados",estado:"MS",tipo:"Rural",vm:13155059,vf:11395570,area:7.26,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-22.2212,lng:-54.8055,previsaoRegistro:"26/03/2026"},
+  {mat:"58840",tipologia:"Prédio Comercial",cidade:"Vargem Grande Paulista",estado:"SP",tipo:"Urbano",vm:13145579,vf:10516463,area:1407,unidade:"m²",nivel:"Nível 0",localizacao:"Parcialmente Localizado",status:"Concluída",lat:-23.6019,lng:-47.0300,previsaoRegistro:"01/07/2026"},
+  {mat:"23697",tipologia:"Agroindustria",cidade:"PR",estado:"PR",tipo:"Rural",vm:14301000,vf:9790000,area:null,unidade:null,nivel:"Laudo - Lid.",localizacao:"Não disponível",status:"Pendente",lat:-23.4208,lng:-51.9331,comprador:"Cooperativa INTEGRADA"},
+  {mat:"39606",tipologia:"Prédio Comercial",cidade:"Jacareí",estado:"SP",tipo:"Urbano",vm:8836364,vf:7883985,area:3250,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.2947,lng:-45.9653,comprador:"Empresário da cidade"},
   {mat:"2164",tipologia:"Gleba",cidade:"Taciba",estado:"SP",tipo:"Rural",vm:8775718,vf:7140620,area:176.35,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-22.3953,lng:-51.2800},
   {mat:"26999",tipologia:"Prédio Comercial",cidade:"Bragança Paulista",estado:"SP",tipo:"Urbano",vm:6484813,vf:6484813,area:4036.77,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-22.9516,lng:-46.5416},
   {mat:"10565",tipologia:"Agroindustria",cidade:"Fátima do Sul",estado:"MS",tipo:"Rural",vm:6971320,vf:5594484,area:13.43,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-22.5107,lng:-54.0507},
-  {mat:"145993",tipologia:"Gleba",cidade:"Dourados",estado:"MS",tipo:"Rural",vm:6108735,vf:4956143,area:87.83,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-22.2512,lng:-54.7755},
-  {mat:"6896",tipologia:"Terreno",cidade:"Maringá",estado:"PR",tipo:"Urbano",vm:6875426,vf:4881552,area:15000,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.4205,lng:-51.9333},
-  {mat:"1615",tipologia:"Agroindustria",cidade:"Canoinhas",estado:"SC",tipo:"Rural",vm:5570395,vf:4741799,area:32920,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-26.1786,lng:-50.3917},
-  {mat:"146005",tipologia:"Gleba",cidade:"Dourados",estado:"MS",tipo:"Rural",vm:5325769,vf:4320907,area:86.67,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-22.2012,lng:-54.8355},
-  {mat:"4479",tipologia:"Agroindustria",cidade:"Mauá da Serra",estado:"PR",tipo:"Rural",vm:4986949,vf:4319945,area:27104,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.9000,lng:-51.2500},
-  {mat:"9846",tipologia:"Agroindustria",cidade:"Floraí",estado:"PR",tipo:"Rural",vm:4279250,vf:3803183,area:17430,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.3156,lng:-52.2744},
-  {mat:"5377",tipologia:"Agroindustria",cidade:"Rancho Alegre",estado:"PR",tipo:"Rural",vm:3376178,vf:3000578,area:76230,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.5978,lng:-51.0028},
-  {mat:"35948",tipologia:"Prédio Comercial",cidade:"Indaiatuba",estado:"SP",tipo:"Urbano",vm:3076885,vf:2615352,area:2442,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.0900,lng:-47.2197},
-  {mat:"360",tipologia:"Barracão",cidade:"Piedade",estado:"SP",tipo:"Urbano",vm:2199235,vf:2199235,area:3800,unidade:"m²",nivel:"Nível 0",localizacao:"Parcialmente Localizado",status:"Concluída",lat:-23.9119,lng:-47.4267},
-  {mat:"2464",tipologia:"Gleba",cidade:"Assaí",estado:"PR",tipo:"Rural",vm:2572652,vf:2064553,area:591690,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.3694,lng:-50.8531},
-  {mat:"6193",tipologia:"Agroindustria",cidade:"Mauá da Serra",estado:"PR",tipo:"Rural",vm:1893464,vf:1640213,area:20000,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.9200,lng:-51.2300},
-  {mat:"25766",tipologia:"Galpão",cidade:"Itapeva",estado:"SP",tipo:"Urbano",vm:1537000,vf:1537000,area:null,unidade:null,nivel:"Laudo Lideratu",localizacao:"Não Localizado",status:"Concluída",lat:-23.9822,lng:-48.8757},
-  {mat:"2053",tipologia:"Galpão Industrial",cidade:"Curitibanos",estado:"SC",tipo:"Urbano",vm:1411200,vf:1411200,area:10000,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-27.2825,lng:-50.5783},
-  {mat:"11142",tipologia:"Terreno",cidade:"Piedade",estado:"SP",tipo:"Urbano",vm:1517475,vf:1138106,area:1048,unidade:"m²",nivel:"Nível 0",localizacao:"Parcialmente Localizado",status:"Concluída",lat:-23.9319,lng:-47.4467},
+  {mat:"145993",tipologia:"Gleba",cidade:"Dourados",estado:"MS",tipo:"Rural",vm:6108735,vf:4956143,area:87.83,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-22.2512,lng:-54.7755,previsaoRegistro:"25/05/2026"},
+  {mat:"6896",tipologia:"Terreno",cidade:"Maringá",estado:"PR",tipo:"Urbano",vm:6875426,vf:4881552,area:15000,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.4205,lng:-51.9333,comprador:"MC Incorporações",previsaoRegistro:"01/07/2026"},
+  {mat:"1615",tipologia:"Agroindustria",cidade:"Canoinhas",estado:"SC",tipo:"Rural",vm:5570395,vf:4741799,area:32920,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-26.1786,lng:-50.3917,comprador:"Cooperativa Agricola de Canoinhas",previsaoRegistro:"13/04/2026"},
+  {mat:"146005",tipologia:"Gleba",cidade:"Dourados",estado:"MS",tipo:"Rural",vm:5325769,vf:4320907,area:86.67,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-22.2012,lng:-54.8355,previsaoRegistro:"25/05/2026"},
+  {mat:"4479",tipologia:"Agroindustria",cidade:"Mauá da Serra",estado:"PR",tipo:"Rural",vm:4986949,vf:4319945,area:27104,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.9000,lng:-51.2500,comprador:"Cooperativa INTEGRADA"},
+  {mat:"9846",tipologia:"Agroindustria",cidade:"Floraí",estado:"PR",tipo:"Rural",vm:4279250,vf:3803183,area:17430,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.3156,lng:-52.2744,comprador:"Cooperativa INTEGRADA",previsaoRegistro:"02/10/2026"},
+  {mat:"5377",tipologia:"Agroindustria",cidade:"Rancho Alegre",estado:"PR",tipo:"Rural",vm:3376178,vf:3000578,area:76230,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.5978,lng:-51.0028,comprador:"Cooperativa INTEGRADA",previsaoRegistro:"02/10/2026"},
+  {mat:"35948",tipologia:"Prédio Comercial",cidade:"Indaiatuba",estado:"SP",tipo:"Urbano",vm:3076885,vf:2615352,area:2442,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.0900,lng:-47.2197,comprador:"Investidor e Incorporadora",previsaoRegistro:"26/03/2026"},
+  {mat:"360",tipologia:"Barracão",cidade:"Piedade",estado:"SP",tipo:"Urbano",vm:2199235,vf:2199235,area:3800,unidade:"m²",nivel:"Nível 0",localizacao:"Parcialmente Localizado",status:"Concluída",lat:-23.9119,lng:-47.4267,previsaoRegistro:"26/03/2026"},
+  {mat:"2464",tipologia:"Gleba",cidade:"Assaí",estado:"PR",tipo:"Rural",vm:2572652,vf:2064553,area:591690,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.3694,lng:-50.8531,previsaoRegistro:"26/04/2026"},
+  {mat:"6193",tipologia:"Agroindustria",cidade:"Mauá da Serra",estado:"PR",tipo:"Rural",vm:1893464,vf:1640213,area:20000,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.9200,lng:-51.2300,comprador:"Cooperativa INTEGRADA"},
+  {mat:"25766",tipologia:"Galpão",cidade:"Itapeva",estado:"SP",tipo:"Urbano",vm:1537000,vf:1537000,area:null,unidade:null,nivel:"Laudo Lideratu",localizacao:"Não Localizado",status:"Concluída",lat:-23.9822,lng:-48.8757,comprador:"Investidor local e comodatário",previsaoRegistro:"06/03/2026"},
+  {mat:"2053",tipologia:"Galpão Industrial",cidade:"Curitibanos",estado:"SC",tipo:"Urbano",vm:1411200,vf:1411200,area:10000,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-27.2825,lng:-50.5783,previsaoRegistro:"AGUARDANDO DEFINIÇÃO QUANTO AO PAGAMENTO DAS DÍVIDAS DA CAC"},
+  {mat:"11142",tipologia:"Terreno",cidade:"Piedade",estado:"SP",tipo:"Urbano",vm:1517475,vf:1138106,area:1048,unidade:"m²",nivel:"Nível 0",localizacao:"Parcialmente Localizado",status:"Concluída",lat:-23.9319,lng:-47.4467,previsaoRegistro:"19/06/2026"},
   {mat:"4379",tipologia:"Galpão",cidade:"Santo Anastácio",estado:"SP",tipo:"Urbano",vm:1013342,vf:709340,area:3371.4,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-21.9758,lng:-51.6564},
-  {mat:"579",tipologia:"Galpão",cidade:"Estrela do Sul",estado:"MG",tipo:"Rural",vm:527500,vf:456947,area:5.1,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-18.7378,lng:-47.6903},
-  {mat:"1453",tipologia:"Galpão",cidade:"São Joaquim",estado:"SC",tipo:"Urbano",vm:2558432,vf:430072,area:null,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-28.2943,lng:-49.9308},
-  {mat:"2629",tipologia:"Terreno",cidade:"Assaí",estado:"PR",tipo:"Urbano",vm:548855,vf:411641,area:3717,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.3794,lng:-50.8631},
-  {mat:"3495",tipologia:"Fazenda",cidade:"Tiros",estado:"MG",tipo:"Rural",vm:332540,vf:332540,area:687.75,unidade:"ha",nivel:"Laudo Jud./3",localizacao:"Parcialmente Localizado",status:"Concluída",lat:-18.9800,lng:-45.9667},
-  {mat:"7632",tipologia:"Gleba",cidade:"Assaí",estado:"PR",tipo:"Urbano",vm:316814,vf:316814,area:115610,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.3894,lng:-50.8731},
-  {mat:"8701",tipologia:"Gleba",cidade:"Guaíra",estado:"PR",tipo:"Rural",vm:391730,vf:314585,area:55.66,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-24.0769,lng:-54.2561},
-  {mat:"3222",tipologia:"Chácara Urbana",cidade:"Assaí",estado:"PR",tipo:"Urbano",vm:404291,vf:303218,area:7006,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.3594,lng:-50.8431},
+  {mat:"579",tipologia:"Galpão",cidade:"Estrela do Sul",estado:"MG",tipo:"Rural",vm:527500,vf:456947,area:5.1,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-18.7378,lng:-47.6903,comprador:"Eucamed"},
+  {mat:"1453",tipologia:"Galpão",cidade:"São Joaquim",estado:"SC",tipo:"Urbano",vm:2558432,vf:430072,area:null,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-28.2943,lng:-49.9308,comprador:"Cooperativa INTEGRADA"},
+  {mat:"2629",tipologia:"Terreno",cidade:"Assaí",estado:"PR",tipo:"Urbano",vm:548855,vf:411641,area:3717,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.3794,lng:-50.8631,previsaoRegistro:"26/04/2026"},
+  {mat:"3495",tipologia:"Fazenda",cidade:"Tiros",estado:"MG",tipo:"Rural",vm:332540,vf:332540,area:687.75,unidade:"ha",nivel:"Laudo Jud./3",localizacao:"Parcialmente Localizado",status:"Concluída",lat:-18.9800,lng:-45.9667,previsaoRegistro:"26/03/2026"},
+  {mat:"7632",tipologia:"Gleba",cidade:"Assaí",estado:"PR",tipo:"Urbano",vm:316814,vf:316814,area:115610,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.3894,lng:-50.8731,previsaoRegistro:"25/05/2026"},
+  {mat:"8701",tipologia:"Gleba",cidade:"Guaíra",estado:"PR",tipo:"Rural",vm:391730,vf:314585,area:55.66,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-24.0769,lng:-54.2561,previsaoRegistro:"19/03/2026"},
+  {mat:"3222",tipologia:"Chácara Urbana",cidade:"Assaí",estado:"PR",tipo:"Urbano",vm:404291,vf:303218,area:7006,unidade:"ha",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.3594,lng:-50.8431,previsaoRegistro:"26/04/2026"},
   {mat:"7047",tipologia:"Casa Residencial",cidade:"Tatuí",estado:"SP",tipo:"Urbano",vm:283290,vf:198303,area:250,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.3561,lng:-47.8575},
-  {mat:"51",tipologia:"Chácara Urbana",cidade:"São Roque",estado:"SP",tipo:"Urbano",vm:164136,vf:164136,area:580800,unidade:"m²",nivel:"Laudo Jud./3",localizacao:"Parcialmente Localizado",status:"Concluída",lat:-23.5295,lng:-47.1371},
-  {mat:"147628",tipologia:"Apartamento",cidade:"Rio de Janeiro",estado:"RJ",tipo:"Urbano",vm:173345,vf:86673,area:null,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-22.9068,lng:-43.1729},
-  {mat:"11444",tipologia:"Prédio Comercial",cidade:"Guarapuava",estado:"PR",tipo:"Urbano",vm:86187,vf:86187,area:698.75,unidade:"m²",nivel:"Laudo Jud./3",localizacao:"Parcialmente Localizado",status:"Concluída",lat:-25.3896,lng:-51.4625},
-  {mat:"15927",tipologia:"Chácara Urbana",cidade:"São Roque",estado:"SP",tipo:"Urbano",vm:0,vf:0,area:12000,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.5395,lng:-47.1471},
+  {mat:"51",tipologia:"Chácara Urbana",cidade:"São Roque",estado:"SP",tipo:"Urbano",vm:164136,vf:164136,area:580800,unidade:"m²",nivel:"Laudo Jud./3",localizacao:"Parcialmente Localizado",status:"Concluída",lat:-23.5295,lng:-47.1371,previsaoRegistro:"26/06/2026"},
+  {mat:"147628",tipologia:"Apartamento",cidade:"Rio de Janeiro",estado:"RJ",tipo:"Urbano",vm:173345,vf:86673,area:null,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-22.9068,lng:-43.1729,previsaoRegistro:"13/04/2026"},
+  {mat:"11444",tipologia:"Prédio Comercial",cidade:"Guarapuava",estado:"PR",tipo:"Urbano",vm:86187,vf:86187,area:698.75,unidade:"m²",nivel:"Laudo Jud./3",localizacao:"Parcialmente Localizado",status:"Concluída",lat:-25.3896,lng:-51.4625,previsaoRegistro:"19/03/2026"},
+  {mat:"15927",tipologia:"Chácara Urbana",cidade:"São Roque",estado:"SP",tipo:"Urbano",vm:0,vf:0,area:12000,unidade:"m²",nivel:"Nível 1",localizacao:"Localizado",status:"Concluída",lat:-23.5395,lng:-47.1471,previsaoRegistro:"26/06/2026"},
   {mat:"Posse",tipologia:"—",cidade:"—",estado:"SP",tipo:"Urbano",vm:0,vf:0,area:null,unidade:null,nivel:"—",localizacao:"Não disponível",status:"Pendente",lat:null,lng:null},
-  {mat:"Equipamentos",tipologia:"—",cidade:"—",estado:"GO",tipo:"Rural",vm:0,vf:3900000,area:null,unidade:null,nivel:"Laudo - Rural",localizacao:"Não disponível",status:"Pendente",lat:-16.6869,lng:-49.2648},
+  {mat:"Equipamentos",tipologia:"—",cidade:"—",estado:"GO",tipo:"Rural",vm:0,vf:3900000,area:null,unidade:null,nivel:"Laudo - Rural",localizacao:"Não disponível",status:"Pendente",lat:-16.6869,lng:-49.2648,comprador:"Investidor local e comodatário",previsaoRegistro:"06/03/2026"},
 ];
 
 // ── DADOS DE VENDA ────────────────────────────────────────────────────
-// Chave: mat do imóvel | valorVenda: preço de venda | valorRecebido: caixa confirmado
 const SALES = {
   "8112":  { valorVenda: 19500000, valorRecebido: 19500000 },
   "39606": { valorVenda:  7200000, valorRecebido:  7200000 },
   "35948": { valorVenda:  2700000, valorRecebido:  1350000 },
   "4379":  { valorVenda:   850000, valorRecebido:   850000 },
+};
+
+// ── FLUXO DE RECEBIMENTO ─────────────────────────────────────────────
+// Editável: cada entrada representa uma linha do fluxo (sinal + parcelas)
+// totalVenda: valor total da venda | recebido: valor já recebido
+// parcelas: [ { label, data, principal, juros } ]
+let FLUXO = {
+  totalRecebido: 21800000,
+  totalRemanescente: 38464568.16,
+  linhas: [
+    { mat: '6.896',                              recebido: 5400000,   remanescente: 12600000,    dataBaixa: '05/11/2025', criterio: '30% à vista e restante pago na data da escritura sem correção' },
+    { mat: '579',                                recebido: 40000,     remanescente: null,         dataBaixa: '30/10/2025', criterio: '' },
+    { mat: '579',                                recebido: 860000,    remanescente: null,         dataBaixa: '31/10/2025', criterio: '' },
+    { mat: '1.479, 6.193, 23.697, 9.846, 5.377',recebido: 10400000,  remanescente: 20964568.16,  dataBaixa: '02/01/2016', criterio: '+ 3 parcelas anuais de R$ 5.200.000,00 corrigidas a CDI + 1,5% a.a' },
+    { mat: '1615',                               recebido: 2100000,   remanescente: 4900000,      dataBaixa: '13/03/2026', criterio: '30% à vista e restante pago na data da escritura com correção CDI' },
+    { mat: 'MATS 1.756, 1.757, 1.758 E 1.759*', recebido: 3000000,   remanescente: null,         dataBaixa: '12/01/2026', criterio: 'Indenização relacionada a depreciação de imóvel adjudicado' },
+  ]
 };
 
 // ── HELPERS ───────────────────────────────────────────────────────────
@@ -973,7 +1075,6 @@ function renderKPIs() {
   animCount(document.getElementById('kpiVF'), totalVF/1e6, 'R$ ', 1);
   setTimeout(() => document.getElementById('kpiVF').textContent = 'R$ ' + (totalVF/1e6).toFixed(1) + 'M', 1250);
 
-  animCount(document.getElementById('kpiVendidos'), qtdVendidos);
   const vendPct = total > 0 ? Math.round(qtdVendidos / total * 100) : 0;
   document.getElementById('kpiVendidosPct').textContent = vendPct + '%';
   setTimeout(() => {
@@ -983,13 +1084,15 @@ function renderKPIs() {
 
   animCount(document.getElementById('kpiValorVendido'), totalVendido / 1e6, 'R$ ', 1);
   setTimeout(() => { document.getElementById('kpiValorVendido').textContent = fmt(totalVendido); }, 1250);
+  document.getElementById('kpiVendidosInline').textContent = qtdVendidos + ' imóveis';
 
   const estoqueRestante = totalVF - totalVendido;
   animCount(document.getElementById('kpiEstoque'), estoqueRestante / 1e6, 'R$ ', 1);
   setTimeout(() => { document.getElementById('kpiEstoque').textContent = fmt(estoqueRestante); }, 1250);
 
-  animCount(document.getElementById('kpiRecebido'), totalTabelaGI / 1e6, 'R$ ', 1);
-  setTimeout(() => { document.getElementById('kpiRecebido').textContent = fmt(totalTabelaGI); }, 1250);
+  const recebido = FLUXO.totalRecebido;
+  animCount(document.getElementById('kpiRecebido'), recebido / 1e6, 'R$ ', 1);
+  setTimeout(() => { document.getElementById('kpiRecebido').textContent = fmt(recebido); }, 1250);
 
 
   document.getElementById('liveCount').textContent = total;
@@ -1036,12 +1139,16 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('searchInput').addEventListener('input', applyFilters);
   document.getElementById('filterEstado').addEventListener('change', applyFilters);
   document.getElementById('filterTipo').addEventListener('change', applyFilters);
-  document.getElementById('filterStatus').addEventListener('change', applyFilters);
+  document.getElementById('filterStatusVenda').addEventListener('change', applyFilters);
 
   // Wire import button
   document.getElementById('importBtn').addEventListener('click', () => {
     document.getElementById('fileInput').click();
   });
+
+  // Wire modal cards
+  document.getElementById('cardValorVendido').addEventListener('click', openModalVendidos);
+  document.getElementById('cardRecebido').addEventListener('click', openModalFluxo);
   document.getElementById('fileInput').addEventListener('change', handleFileImport);
 
   renderAll();
@@ -1089,10 +1196,12 @@ function initMap() {
       <div class="popup-row"><span>💰 VM Enforce</span><span class="popup-val">${fmt(p.vm)}</span></div>
       <div class="popup-row"><span>📉 VF Enforce</span><span class="popup-val">${fmt(p.vf)}</span></div>
       ${p.area ? `<div class="popup-row"><span>📐 Área</span><span class="popup-val">${fmtArea(p.area, p.unidade)}</span></div>` : ''}
+      ${p.comprador ? `<div class="popup-row"><span>🤝 Comprador</span><span class="popup-val">${p.comprador}</span></div>` : ''}
+      ${p.previsaoRegistro ? `<div class="popup-row"><span>📅 Prev. Registro</span><span class="popup-val">${p.previsaoRegistro}</span></div>` : ''}
       <div style="margin-top:8px;">
         <span class="popup-chip" style="background:${color}22;color:${color};border:1px solid ${color}44">${p.tipo}</span>
       </div>
-    `, { maxWidth: 260 });
+    `, { maxWidth: 280 });
   });
 }
 
@@ -1291,59 +1400,11 @@ function tipoChip(t) {
   return `<span class="chip chip-gray">${t}</span>`;
 }
 
-function renderTable() {
-  const tbody = document.getElementById('tableBody');
-  const tableDisplayMode = document.getElementById('tableDisplayMode').value;
-  const totalPages = Math.max(1, Math.ceil(filteredData.length / PAGE_SIZE));
-  const start = (currentPage - 1) * PAGE_SIZE;
-  const rows = tableDisplayMode === 'all'
-    ? filteredData
-    : filteredData.slice(start, start + PAGE_SIZE);
-
-  tbody.innerHTML = rows.map(p => `
-    <tr>
-      <td><span style="font-weight:600;color:var(--text)">${p.mat}</span></td>
-      <td>${p.tipologia}</td>
-      <td><span style="color:var(--text)">${p.cidade}</span><br><span style="font-size:10px;color:var(--text-muted)">${p.estado}</span></td>
-      <td>${tipoChip(p.tipo)}</td>
-      <td><span class="num-val ${p.vm >= 5e6 ? 'large' : ''}">${fmt(p.vm)}</span></td>
-      <td><span class="num-val">${fmt(p.vf)}</span></td>
-      <td>${fmtArea(p.area, p.unidade)}</td>
-      <td>${(() => { const gi = parseNum(p.tabelaGI); return gi != null ? `<span class="num-val">${fmt(gi)}</span>` : p.tabelaGI && p.tabelaGI !== '-' ? `<span style="font-size:10px;color:var(--text-muted)">${p.tabelaGI}</span>` : '<span style="color:var(--text-muted)">—</span>'; })()}</td>
-      <td><span style="color:var(--text-soft);font-size:11px">${p.obs || '—'}</span></td>
-    </tr>
-  `).join('');
-
-  document.getElementById('tableCount').textContent = `${filteredData.length} imóveis`;
-  renderPagination();
-}
-
-function renderPagination() {
-  const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
-  const pg = document.getElementById('pagination');
-  let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>← Ant.</button>`;
-  for (let i = 1; i <= totalPages; i++) {
-    if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
-      html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
-    } else if (Math.abs(i - currentPage) === 2) {
-      html += `<span style="color:var(--text-muted);padding:0 4px">…</span>`;
-    }
-  }
-  html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>Próx. →</button>`;
-  pg.innerHTML = html;
-}
-
-function goPage(n) {
-  const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
-  currentPage = Math.max(1, Math.min(n, totalPages));
-  renderTable();
-}
-
 function applyFilters() {
   const search = document.getElementById('searchInput').value.toLowerCase();
   const estado = document.getElementById('filterEstado').value;
   const tipo = document.getElementById('filterTipo').value;
-  const status = document.getElementById('filterStatus').value;
+  const statusVenda = document.getElementById('filterStatusVenda').value;
 
   filteredData = PROPERTIES.filter(p => {
     const matchSearch = !search ||
@@ -1352,9 +1413,9 @@ function applyFilters() {
       (p.tipologia||'').toLowerCase().includes(search) ||
       (p.estado||'').toLowerCase().includes(search);
     const matchEstado = !estado || p.estado === estado;
-    const matchTipo = !tipo || p.tipo === tipo;
-    const matchStatus = !status || p.status === status;
-    return matchSearch && matchEstado && matchTipo && matchStatus;
+    const matchTipo   = !tipo   || p.tipo   === tipo;
+    const matchStatusVenda = !statusVenda || (p.statusVenda || '').trim() === statusVenda;
+    return matchSearch && matchEstado && matchTipo && matchStatusVenda;
   });
 
   // sort
@@ -1389,14 +1450,16 @@ function renderTable() {
       <td><span class="num-val ${p.vm >= 5e6 ? 'large' : ''}">${fmt(p.vm)}</span></td>
       <td><span class="num-val">${fmt(p.vf)}</span></td>
       <td>${fmtArea(p.area, p.unidade)}</td>
-      <td>${(() => { const gi = parseNum(p.tabelaGI); return gi != null ? `<span class="num-val">${fmt(gi)}</span>` : p.tabelaGI && p.tabelaGI !== '-' ? `<span style="font-size:10px;color:var(--text-muted)">${p.tabelaGI}</span>` : '<span style="color:var(--text-muted)">â€”</span>'; })()}</td>
-      <td><span style="color:var(--text-soft);font-size:11px">${p.obs || 'â€”'}</span></td>
+      <td>${(() => { const gi = parseNum(p.tabelaGI); return gi != null ? `<span class="num-val">${fmt(gi)}</span>` : p.tabelaGI && p.tabelaGI !== '-' ? `<span style="font-size:10px;color:var(--text-muted)">${p.tabelaGI}</span>` : '<span style="color:var(--text-muted)">—</span>'; })()}</td>
+      <td><span style="font-size:11px;color:var(--text-soft)">${p.comprador || '—'}</span></td>
+      <td><span style="font-size:11px;color:var(--text-soft)">${p.previsaoRegistro || '—'}</span></td>
+      <td><span style="color:var(--text-soft);font-size:11px">${p.obs || '—'}</span></td>
     </tr>
-  `).join('') || `<tr><td colspan="9" style="text-align:center;color:var(--text-muted)">Nenhum im&oacute;vel encontrado.</td></tr>`;
+  `).join('') || `<tr><td colspan="11" style="text-align:center;color:var(--text-muted)">Nenhum im&oacute;vel encontrado.</td></tr>`;
 
   document.getElementById('tableCount').textContent = tableDisplayMode === 'all'
-    ? `${filteredData.length} imÃ³veis • listagem completa`
-    : `${filteredData.length} imÃ³veis • pÃ¡gina ${currentPage} de ${totalPages}`;
+    ? `${filteredData.length} imóveis • listagem completa`
+    : `${filteredData.length} imóveis • página ${currentPage} de ${totalPages}`;
 
   renderPagination();
 }
@@ -1412,15 +1475,15 @@ function renderPagination() {
 
   pg.style.display = 'flex';
   const totalPages = Math.max(1, Math.ceil(filteredData.length / PAGE_SIZE));
-  let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>â† Ant.</button>`;
+  let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>← Ant.</button>`;
   for (let i = 1; i <= totalPages; i++) {
     if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
       html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
     } else if (Math.abs(i - currentPage) === 2) {
-      html += `<span style="color:var(--text-muted);padding:0 4px">â€¦</span>`;
+      html += `<span style="color:var(--text-muted);padding:0 4px">…</span>`;
     }
   }
-  html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>PrÃ³x. â†’</button>`;
+  html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>Próx. ←’</button>`;
   pg.innerHTML = html;
 }
 
@@ -1445,6 +1508,26 @@ function colVal(row, ...keys) {
     if (found !== undefined && row[found] !== null && row[found] !== '') return row[found];
   }
   return null;
+}
+
+function fmtDate(v) {
+  if (!v) return null;
+  // SheetJS pode retornar Date, string "DD/MM/YYYY", string de texto livre
+  if (v instanceof Date) {
+    const d = v.getDate().toString().padStart(2,'0');
+    const m = (v.getMonth()+1).toString().padStart(2,'0');
+    const y = v.getFullYear();
+    return `${d}/${m}/${y}`;
+  }
+  // Número serial do Excel (fallback raro)
+  if (typeof v === 'number') {
+    const epoch = new Date(Math.round((v - 25569) * 86400 * 1000));
+    const d = epoch.getUTCDate().toString().padStart(2,'0');
+    const m = (epoch.getUTCMonth()+1).toString().padStart(2,'0');
+    const y = epoch.getUTCFullYear();
+    return `${d}/${m}/${y}`;
+  }
+  return String(v).trim();
 }
 
 function parseNum(v) {
@@ -1489,7 +1572,9 @@ function parseExcelToProperties(workbook) {
       statusVenda: colVal(row, 'status'),
       obs:         colVal(row, 'obs'),
       tabelaGI:    colVal(row, 'tabela gi', 'tabelagi', 'tabela_gi', 'gi'),
-      proposta:    parseNum(colVal(row, 'proposta', 'valor proposta', 'proposta valor')),
+      proposta:         parseNum(colVal(row, 'proposta', 'valor proposta', 'proposta valor')),
+      comprador:        colVal(row, 'comprador') || null,
+      previsaoRegistro: fmtDate(colVal(row, 'previsão de registro', 'previsao de registro', 'previsão registro', 'previsao registro')),
       lat:         parseNum(colVal(row, 'lat', 'latitude'))  ?? coords.lat ?? null,
       lng:         parseNum(colVal(row, 'lng', 'long', 'longitude')) ?? coords.lng ?? null,
     };
@@ -1532,6 +1617,102 @@ function handleFileImport(e) {
   };
   reader.readAsArrayBuffer(file);
 }
+
+// ── MODAL: IMÓVEIS VENDIDOS ───────────────────────────────────────────
+function openModalVendidos() {
+  const tbody = document.getElementById('soldTableBody');
+  const totalEl = document.getElementById('soldTotalGI');
+  const sold = PROPERTIES.filter(p => {
+    const sv = (p.statusVenda || '').trim().toLowerCase();
+    return sv === 'vendido' || (sv === '' && !!SALES[p.mat]);
+  });
+
+  let total = 0;
+  tbody.innerHTML = sold.map(p => {
+    const proposta = p.proposta ?? parseNum(p.tabelaGI) ?? SALES[p.mat]?.valorVenda ?? 0;
+    total += proposta;
+    const chip = p.statusVenda
+      ? `<span class="chip chip-green" style="font-size:10px">${p.statusVenda}</span>`
+      : '';
+    return `<tr>
+      <td style="font-weight:600;color:var(--text)">${p.mat}</td>
+      <td>${p.tipologia}</td>
+      <td><span style="color:var(--text)">${p.cidade}</span> <span style="color:var(--text-muted);font-size:10px">${p.estado}</span></td>
+      <td>${p.tipo === 'Rural' ? '<span class="chip chip-green" style="font-size:10px">Rural</span>' : '<span class="chip chip-blue" style="font-size:10px">Urbano</span>'}</td>
+      <td class="cf-num"><span class="num-val">${fmt(p.vm)}</span></td>
+      <td class="cf-num"><span class="num-val">${fmt(p.vf)}</span></td>
+      <td class="cf-num"><span class="num-val" style="color:var(--green)">${proposta > 0 ? fmt(proposta) : '—'}</span></td>
+      <td style="font-size:11px;color:var(--text-soft)">${p.comprador || '—'}</td>
+      <td style="font-size:11px;color:var(--text-soft)">${p.previsaoRegistro || '—'}</td>
+      <td style="font-size:11px;color:var(--text-muted)">${p.obs || '—'}</td>
+    </tr>`;
+  }).join('');
+
+  totalEl.textContent = fmt(total);
+  document.getElementById('modalVendidos').classList.add('open');
+}
+
+// ── MODAL: FLUXO DE RECEBIMENTO ───────────────────────────────────────
+function openModalFluxo() {
+  const f = FLUXO;
+  const fmtBR = (v) => {
+    if (v == null || v === '') return '—';
+    return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const rows = f.linhas.map(l => `
+    <tr>
+      <td style="font-weight:600;color:var(--text);white-space:nowrap">${l.mat}</td>
+      <td class="cf-num"><span style="color:var(--green);font-weight:700">${fmtBR(l.recebido)}</span></td>
+      <td class="cf-num">${l.remanescente ? `<span style="color:var(--amber);font-weight:600">${fmtBR(l.remanescente)}</span>` : '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td style="white-space:nowrap">${l.dataBaixa}</td>
+      <td style="font-size:11px;color:var(--text-soft);max-width:280px">${l.criterio || '—'}</td>
+    </tr>`).join('');
+
+  document.getElementById('fluxoContent').innerHTML = `
+    <div style="display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap">
+      <div style="flex:1;min-width:160px;background:rgba(16,185,129,.08);border-radius:12px;padding:16px 20px;border:1px solid rgba(16,185,129,.25)">
+        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Total Recebido</div>
+        <div style="font-size:24px;font-weight:800;color:var(--green)">${fmtBR(f.totalRecebido)}</div>
+      </div>
+      <div style="flex:1;min-width:160px;background:rgba(245,158,11,.08);border-radius:12px;padding:16px 20px;border:1px solid rgba(245,158,11,.25)">
+        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Total Remanescente</div>
+        <div style="font-size:24px;font-weight:800;color:var(--amber)">${fmtBR(f.totalRemanescente)}</div>
+      </div>
+    </div>
+    <div class="cf-wrap">
+      <table class="cf-table">
+        <thead>
+          <tr>
+            <th>MAT</th>
+            <th class="cf-num">R$ Recebido</th>
+            <th class="cf-num">R$ Remanescente</th>
+            <th>Data Baixa</th>
+            <th>Critérios Remanescente</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+        <tfoot>
+          <tr class="cf-total">
+            <td style="font-weight:700">TOTAL</td>
+            <td class="cf-num cf-highlight">${fmtBR(f.totalRecebido)}</td>
+            <td class="cf-num" style="color:var(--amber);font-weight:700">${fmtBR(f.totalRemanescente)}</td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>`;
+
+  document.getElementById('modalFluxo').classList.add('open');
+}
+
+// Fechar modal ao clicar fora
+document.addEventListener('click', (e) => {
+  ['modalVendidos','modalFluxo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (e.target === el) el.classList.remove('open');
+  });
+});
 </script>
 </body>
 </html>
