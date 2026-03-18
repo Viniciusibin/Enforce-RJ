@@ -639,12 +639,18 @@
       .row-map-chart, .row-2col, .row-3col {
         grid-template-columns: 1fr;
       }
+      .compare-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
       #map { height: 340px; }
     }
     @media (max-width: 680px) {
       main { padding: 16px; }
       header { padding: 0 16px; }
       .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .compare-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     /* ── SCROLLBAR ──────────────────────────────────── */
@@ -659,6 +665,11 @@
     .compare-row {
       display: flex;
       flex-direction: column;
+      gap: 12px;
+    }
+    .compare-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 12px;
     }
     .cmp-item {}
@@ -882,14 +893,19 @@
   <div class="card" style="margin-bottom:24px">
     <div class="card-header">
       <span class="card-title">📈 VM vs. VF vs. Tabela GI &mdash; Top 15 Im&oacute;veis</span>
-      <div style="display:flex;gap:12px;font-size:11px;align-items:center;flex-wrap:wrap">
+      <div style="display:flex;gap:12px;font-size:11px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+        <select class="filter-select" id="compareTipoFilter" style="min-width:140px">
+          <option value="">Todos os tipos</option>
+          <option value="Rural">Apenas Rural</option>
+          <option value="Urbano">Apenas Urbano</option>
+        </select>
         <span style="display:flex;align-items:center;gap:4px;color:var(--text-soft)"><div style="width:10px;height:4px;background:var(--primary);border-radius:2px"></div>VM</span>
         <span style="display:flex;align-items:center;gap:4px;color:var(--text-soft)"><div style="width:10px;height:4px;background:var(--accent);border-radius:2px"></div>VF</span>
         <span style="display:flex;align-items:center;gap:4px;color:var(--text-soft)"><div style="width:10px;height:4px;background:var(--amber);border-radius:2px"></div>Tabela GI</span>
         <span style="display:flex;align-items:center;gap:4px;color:var(--text-soft)"><div style="width:10px;height:4px;background:#ef4444;border-radius:2px"></div>Proposta</span>
       </div>
     </div>
-    <div class="compare-row" id="compareList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px"></div>
+    <div class="compare-row compare-grid" id="compareList"></div>
   </div>
 
 </main>
@@ -1118,6 +1134,15 @@ function renderKPIs() {
   document.getElementById('liveCount').textContent = total;
 }
 
+function reorderDashboardSections() {
+  const compareCard = document.getElementById('compareList')?.closest('.card');
+  const mapCard = document.getElementById('map')?.closest('.card');
+  const mapTitle = mapCard?.previousElementSibling;
+
+  if (!compareCard || !mapCard || !mapTitle) return;
+  mapTitle.parentNode.insertBefore(compareCard, mapTitle);
+}
+
 function renderAll() {
   computeKPIs();
   renderKPIs();
@@ -1125,6 +1150,7 @@ function renderAll() {
   initMap();
   initCharts();
   renderCompare();
+  reorderDashboardSections();
   renderValueBars();
   renderSalesTable();
   // Reset estado filter
@@ -1158,6 +1184,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
   document.getElementById('searchInput').addEventListener('input', applyFilters);
+  document.getElementById('compareTipoFilter').addEventListener('change', renderCompare);
   document.getElementById('filterEstado').addEventListener('change', applyFilters);
   document.getElementById('filterTipo').addEventListener('change', applyFilters);
   document.getElementById('filterStatusVenda').addEventListener('change', applyFilters);
@@ -1328,12 +1355,16 @@ function initCharts() {
 
 // ── COMPARE BARS ──────────────────────────────────────────────────────
 function renderCompare() {
-  const all = [...PROPERTIES].filter(p => p.vm > 0 || p.vf > 0 || parseNum(p.tabelaGI) > 0)
+  const tipoFilter = document.getElementById('compareTipoFilter')?.value || '';
+  const all = [...PROPERTIES].filter(p => (!tipoFilter || p.tipo === tipoFilter) && (p.vm > 0 || p.vf > 0 || parseNum(p.tabelaGI) > 0))
                              .sort((a, b) => b.vm - a.vm)
                              .slice(0, 15);
-  if (!all.length) return;
-  const maxVal = Math.max(...all.map(p => Math.max(p.vm || 0, p.vf || 0, parseNum(p.tabelaGI) || 0, p.proposta || 0)));
   const container = document.getElementById('compareList');
+  if (!all.length) {
+    container.innerHTML = `<div style="grid-column:1 / -1;color:var(--text-muted);padding:12px 4px">Nenhum im&oacute;vel encontrado para esse filtro.</div>`;
+    return;
+  }
+  const maxVal = Math.max(...all.map(p => Math.max(p.vm || 0, p.vf || 0, parseNum(p.tabelaGI) || 0, p.proposta || 0)));
   container.innerHTML = all.map(p => {
     const gi       = parseNum(p.tabelaGI) || 0;
     const proposta = p.proposta || 0;
