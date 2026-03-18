@@ -1118,6 +1118,15 @@ function renderKPIs() {
   document.getElementById('liveCount').textContent = total;
 }
 
+function reorderDashboardSections() {
+  const compareCard = document.getElementById('compareList')?.closest('.card');
+  const mapCard = document.getElementById('map')?.closest('.card');
+  const mapTitle = mapCard?.previousElementSibling;
+
+  if (!compareCard || !mapCard || !mapTitle) return;
+  mapTitle.parentNode.insertBefore(compareCard, mapTitle);
+}
+
 function renderAll() {
   computeKPIs();
   renderKPIs();
@@ -1125,6 +1134,7 @@ function renderAll() {
   initMap();
   initCharts();
   renderCompare();
+  reorderDashboardSections();
   renderValueBars();
   renderSalesTable();
   // Reset estado filter
