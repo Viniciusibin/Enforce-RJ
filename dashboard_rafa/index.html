@@ -639,12 +639,18 @@
       .row-map-chart, .row-2col, .row-3col {
         grid-template-columns: 1fr;
       }
+      .compare-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
       #map { height: 340px; }
     }
     @media (max-width: 680px) {
       main { padding: 16px; }
       header { padding: 0 16px; }
       .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .compare-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     /* ── SCROLLBAR ──────────────────────────────────── */
@@ -659,6 +665,11 @@
     .compare-row {
       display: flex;
       flex-direction: column;
+      gap: 12px;
+    }
+    .compare-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 12px;
     }
     .cmp-item {}
@@ -889,7 +900,7 @@
         <span style="display:flex;align-items:center;gap:4px;color:var(--text-soft)"><div style="width:10px;height:4px;background:#ef4444;border-radius:2px"></div>Proposta</span>
       </div>
     </div>
-    <div class="compare-row" id="compareList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px"></div>
+    <div class="compare-row compare-grid" id="compareList"></div>
   </div>
 
 </main>
