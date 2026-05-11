@@ -1,9 +1,14 @@
 ﻿from __future__ import annotations
 
+import os
 from datetime import date, datetime
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, send_from_directory
+
+import database
 
 app = Flask(__name__)
+
+database.init_db()
 
 STANDARD_DOCS = [
     ("PRC", "Plano de Recuperacao de Credito"),
@@ -418,6 +423,52 @@ def dashboard_payload() -> dict:
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/imoveis")
+def imoveis_dashboard():
+    return send_from_directory(
+        os.path.join(app.root_path, "dashboard_rafa"), "index.html"
+    )
+
+
+@app.route("/api/imoveis")
+def api_imoveis():
+    def to_float(v):
+        if v is None:
+            return None
+        try:
+            return float(v)
+        except (ValueError, TypeError):
+            return None
+
+    rows = database.get_all_imoveis()
+    properties = [
+        {
+            "mat":              row.get("mat_tipo"),
+            "tipologia":        row.get("tipologia"),
+            "cidade":           row.get("cidade"),
+            "estado":           row.get("estado"),
+            "tipo":             row.get("tipo_imovel"),
+            "vm":               to_float(row.get("vm_enforce")),
+            "vf":               to_float(row.get("vf_enforce")),
+            "area":             to_float(row.get("area_terreno")),
+            "unidade":          row.get("unid_area_terreno"),
+            "nivel":            row.get("nivel"),
+            "localizacao":      row.get("resultado_localizacao"),
+            "status":           row.get("status_tarefa"),
+            "statusVenda":      row.get("status"),
+            "obs":              row.get("obs"),
+            "tabelaGI":         row.get("tabela_gi"),
+            "proposta":         to_float(row.get("proposta")),
+            "comprador":        row.get("comprador"),
+            "previsaoRegistro": row.get("previsao_registro"),
+            "lat":              to_float(row.get("lat")),
+            "lng":              to_float(row.get("lng")),
+        }
+        for row in rows
+    ]
+    return jsonify(properties)
 
 
 @app.route("/api/dashboard")
