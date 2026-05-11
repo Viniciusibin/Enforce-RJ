@@ -685,6 +685,88 @@
     .cmp-vm { background: var(--primary); }
     .cmp-vf { background: var(--accent); }
     .cmp-gi { background: var(--amber); }
+
+    /* ── PROPOSTAS TABLE ────────────────────────────────── */
+    .propostas-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .propostas-table th {
+      text-align: left; padding: 9px 12px;
+      background: var(--surface2);
+      color: var(--text-muted); font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .06em;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .propostas-table td { padding: 10px 12px; border-bottom: 1px solid rgba(30,48,82,.45); vertical-align: middle; }
+    .propostas-table tr:last-child td { border-bottom: none; }
+    .propostas-table tr:hover td { background: var(--surface2); }
+
+    /* ── PROPOSTA MODAL FORM ────────────────────────────── */
+    .prop-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px 24px;
+    }
+    .prop-form-group { display: flex; flex-direction: column; gap: 6px; }
+    .prop-form-group.full { grid-column: 1 / -1; }
+    .prop-form-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+    .prop-form-input, .prop-form-textarea {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color .15s;
+      width: 100%;
+    }
+    .prop-form-input:focus, .prop-form-textarea:focus { border-color: var(--primary); }
+    .prop-form-textarea { resize: vertical; min-height: 64px; }
+    .prop-mat-hint {
+      font-size: 11px;
+      color: var(--accent);
+      margin-top: 4px;
+      min-height: 16px;
+    }
+    .prop-btn-row { display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px; }
+    .btn-primary {
+      background: var(--primary);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 9px 22px;
+      transition: opacity .15s;
+    }
+    .btn-primary:hover { opacity: .85; }
+    .btn-ghost {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      padding: 9px 18px;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-ghost:hover { border-color: var(--text-soft); color: var(--text); }
+    .proposta-edit-btn {
+      background: rgba(59,130,246,.12);
+      border: 1px solid rgba(59,130,246,.3);
+      border-radius: 6px;
+      color: #93c5fd;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      transition: background .15s;
+    }
+    .proposta-edit-btn:hover { background: rgba(59,130,246,.25); }
   </style>
 </head>
 <body>
@@ -700,6 +782,8 @@
   <div class="header-meta">
     <span class="live-badge"><span class="live-dot"></span><span id="liveCount">38</span> ativos</span>
     <span class="header-date" id="headerDate"></span>
+    <button class="import-btn" id="btnCadastrarVenda" style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35);color:#fca5a5">🏷️ Cadastrar Venda</button>
+    <button class="import-btn" id="btnCadastrarProposta" style="background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.35);color:#6ee7b7">📝 Cadastrar Proposta</button>
     <button class="import-btn" id="importBtn">📂 Importar Planilha</button>
     <input type="file" id="fileInput" accept=".xlsx,.xls,.ods" style="display:none" />
   </div>
@@ -778,14 +862,43 @@
           <th>Tipo</th>
           <th style="text-align:right">VM Enforce</th>
           <th style="text-align:right">VF Enforce</th>
-          <th style="text-align:right">Proposta</th>
+          <th style="text-align:right">Valor de Venda</th>
+          <th style="text-align:right">Recebido</th>
           <th>Status</th>
           <th>Comprador</th>
-          <th>Prev. Registro</th>
+          <th>Data da Venda</th>
+          <th>Fluxo</th>
+          <th>Pend&ecirc;ncia</th>
+          <th>Quem c/ Pend.</th>
           <th>Obs</th>
         </tr>
       </thead>
       <tbody id="salesTableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- PROPOSTAS TABLE -->
+  <div class="section-title">Listagem de Propostas</div>
+  <div class="card" style="margin-bottom:24px;overflow-x:auto" id="propostasCard">
+    <table class="propostas-table" id="propostasTable">
+      <thead>
+        <tr>
+          <th>Mat&iacute;cula</th>
+          <th>Tipologia</th>
+          <th>Cidade / UF</th>
+          <th>Tipo</th>
+          <th style="text-align:right">Valor de Venda</th>
+          <th>Fluxo</th>
+          <th>Quem fez a proposta</th>
+          <th>Pend&ecirc;ncia</th>
+          <th>Quem est&aacute; com a pend&ecirc;ncia</th>
+          <th>Obs</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="propostasTableBody">
+        <tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:24px">Nenhuma proposta cadastrada.</td></tr>
+      </tbody>
     </table>
   </div>
 
@@ -909,6 +1022,109 @@
   </div>
 
 </main>
+
+<!-- MODAL: Cadastrar / Editar Proposta -->
+<div class="modal-overlay" id="modalProposta">
+  <div class="modal-box" style="max-width:680px">
+    <div class="modal-header">
+      <span class="modal-title" id="modalPropostaTitulo">📝 Cadastrar Proposta</span>
+      <button class="modal-close" onclick="fecharModalProposta()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="propostaId" />
+      <div class="prop-form-grid">
+        <div class="prop-form-group">
+          <label class="prop-form-label">Matr&iacute;cula *</label>
+          <input class="prop-form-input" id="propMatricula" placeholder="Ex: 6.896" autocomplete="off" />
+          <div class="prop-mat-hint" id="propMatHint"></div>
+        </div>
+        <div class="prop-form-group">
+          <label class="prop-form-label">Valor de Venda</label>
+          <input class="prop-form-input" id="propValorVenda" placeholder="Ex: 1500000" type="number" min="0" step="0.01" />
+        </div>
+        <div class="prop-form-group full">
+          <label class="prop-form-label">Fluxo (como vai ser)</label>
+          <input class="prop-form-input" id="propFluxo" placeholder="Descreva o fluxo da proposta..." />
+        </div>
+        <div class="prop-form-group">
+          <label class="prop-form-label">Quem fez a proposta</label>
+          <input class="prop-form-input" id="propQuemFez" placeholder="Nome do responsável" />
+        </div>
+        <div class="prop-form-group">
+          <label class="prop-form-label">Pend&ecirc;ncia</label>
+          <input class="prop-form-input" id="propPendencia" placeholder="Descreva a pendência" />
+        </div>
+        <div class="prop-form-group full">
+          <label class="prop-form-label">Quem est&aacute; com a pend&ecirc;ncia</label>
+          <input class="prop-form-input" id="propQuemPendencia" placeholder="Nome do responsável pela pendência" />
+        </div>
+        <div class="prop-form-group full">
+          <label class="prop-form-label">Obs</label>
+          <textarea class="prop-form-textarea" id="propObs" placeholder="Observações adicionais..."></textarea>
+        </div>
+      </div>
+      <div class="prop-btn-row">
+        <button class="btn-ghost" onclick="fecharModalProposta()">Cancelar</button>
+        <button class="btn-primary" id="btnSalvarProposta" onclick="salvarProposta()">Salvar Proposta</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Cadastrar Venda -->
+<div class="modal-overlay" id="modalVenda">
+  <div class="modal-box" style="max-width:680px">
+    <div class="modal-header">
+      <span class="modal-title">🏷️ Cadastrar Venda</span>
+      <button class="modal-close" onclick="fecharModalVenda()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="prop-form-grid">
+        <div class="prop-form-group full">
+          <label class="prop-form-label">Matr&iacute;cula *</label>
+          <input class="prop-form-input" id="vendaMatricula" placeholder="Ex: 6.896" autocomplete="off" />
+          <div class="prop-mat-hint" id="vendaMatHint"></div>
+        </div>
+        <div class="prop-form-group">
+          <label class="prop-form-label">Data da Venda</label>
+          <input class="prop-form-input" id="vendaData" type="date" />
+        </div>
+        <div class="prop-form-group">
+          <label class="prop-form-label">Comprador</label>
+          <input class="prop-form-input" id="vendaComprador" placeholder="Nome do comprador" />
+        </div>
+        <div class="prop-form-group">
+          <label class="prop-form-label">Valor da Venda</label>
+          <input class="prop-form-input" id="vendaValorTotal" placeholder="Ex: 1500000" type="number" min="0" step="0.01" />
+        </div>
+        <div class="prop-form-group">
+          <label class="prop-form-label">Recebido</label>
+          <input class="prop-form-input" id="vendaRecebido" placeholder="Valor já recebido" type="number" min="0" step="0.01" />
+        </div>
+        <div class="prop-form-group full">
+          <label class="prop-form-label">Fluxo (como vai ser)</label>
+          <input class="prop-form-input" id="vendaFluxo" placeholder="Descreva o fluxo de pagamento..." />
+        </div>
+        <div class="prop-form-group">
+          <label class="prop-form-label">Pend&ecirc;ncia</label>
+          <input class="prop-form-input" id="vendaPendencia" placeholder="Descreva a pendência" />
+        </div>
+        <div class="prop-form-group">
+          <label class="prop-form-label">Quem est&aacute; com a pend&ecirc;ncia</label>
+          <input class="prop-form-input" id="vendaQuemPendencia" placeholder="Nome do responsável" />
+        </div>
+        <div class="prop-form-group full">
+          <label class="prop-form-label">Obs</label>
+          <textarea class="prop-form-textarea" id="vendaObs" placeholder="Observações adicionais..."></textarea>
+        </div>
+      </div>
+      <div class="prop-btn-row">
+        <button class="btn-ghost" onclick="fecharModalVenda()">Cancelar</button>
+        <button class="btn-primary" id="btnSalvarVenda" onclick="salvarVenda()" style="background:var(--red)">Registrar Venda</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL: Imóveis Vendidos -->
 <div class="modal-overlay" id="modalVendidos">
@@ -1421,7 +1637,7 @@ function renderSalesTable() {
   };
 
   document.getElementById('salesTableBody').innerHTML = rows.map(p => {
-    const proposta = p.proposta || 0;
+    const recebido = p.proposta || 0;
     return `<tr>
       <td style="font-weight:600;color:var(--text)">${p.mat}</td>
       <td>${p.tipologia}</td>
@@ -1429,13 +1645,17 @@ function renderSalesTable() {
       <td>${p.tipo === 'Rural' ? '<span class="chip chip-green" style="font-size:10px">Rural</span>' : '<span class="chip chip-blue" style="font-size:10px">Urbano</span>'}</td>
       <td style="text-align:right"><span class="num-val">${fmt(p.vm)}</span></td>
       <td style="text-align:right"><span class="num-val">${fmt(p.vf)}</span></td>
-      <td style="text-align:right"><span class="num-val" style="color:var(--green)">${proposta > 0 ? fmt(proposta) : '—'}</span></td>
+      <td style="text-align:right"><span class="num-val" style="color:var(--primary)">${p.valorVendaTotal > 0 ? fmt(p.valorVendaTotal) : '—'}</span></td>
+      <td style="text-align:right"><span class="num-val" style="color:var(--green)">${recebido > 0 ? fmt(recebido) : '—'}</span></td>
       <td>${statusColor(p.statusVenda)}</td>
       <td style="font-size:11px;color:var(--text-soft)">${p.comprador || '—'}</td>
-      <td style="font-size:11px;color:var(--text-soft);white-space:nowrap">${p.previsaoRegistro || '—'}</td>
+      <td style="font-size:11px;color:var(--text-soft);white-space:nowrap">${p.dataVenda || '—'}</td>
+      <td style="font-size:11px;color:var(--text-soft)">${p.fluxoVenda || '—'}</td>
+      <td style="font-size:11px;color:var(--text-soft)">${p.pendenciaVenda || '—'}</td>
+      <td style="font-size:11px;color:var(--text-soft)">${p.quemPendenciaVenda || '—'}</td>
       <td style="font-size:11px;color:var(--text-muted)">${p.obs || '—'}</td>
     </tr>`;
-  }).join('') || `<tr><td colspan="11" style="text-align:center;color:var(--text-muted)">Nenhuma venda encontrada.</td></tr>`;
+  }).join('') || `<tr><td colspan="15" style="text-align:center;color:var(--text-muted)">Nenhuma venda encontrada.</td></tr>`;
 }
 
 // ── TABLE ─────────────────────────────────────────────────────────────
@@ -1784,11 +2004,243 @@ function openModalFluxo() {
 
 // Fechar modal ao clicar fora
 document.addEventListener('click', (e) => {
-  ['modalVendidos','modalFluxo'].forEach(id => {
+  ['modalVendidos','modalFluxo','modalProposta','modalVenda'].forEach(id => {
     const el = document.getElementById(id);
     if (e.target === el) el.classList.remove('open');
   });
 });
+
+// ── PROPOSTAS ─────────────────────────────────────────────────────────
+let PROPOSTAS = [];
+
+function renderPropostasTable() {
+  const tbody = document.getElementById('propostasTableBody');
+  if (!PROPOSTAS.length) {
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:24px">Nenhuma proposta cadastrada.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = PROPOSTAS.map(p => {
+    const tipo = p.tipo === 'Rural'
+      ? '<span class="chip chip-green" style="font-size:10px">Rural</span>'
+      : p.tipo === 'Urbano'
+        ? '<span class="chip chip-blue" style="font-size:10px">Urbano</span>'
+        : `<span style="color:var(--text-muted)">—</span>`;
+    const valorFmt = p.valor_venda ? fmt(p.valor_venda) : '—';
+    return `<tr>
+      <td><span style="font-weight:600;color:var(--text)">${p.matricula || '—'}</span></td>
+      <td style="font-size:11px;color:var(--text-soft)">${p.tipologia || '—'}</td>
+      <td style="font-size:11px"><span style="color:var(--text)">${p.cidade || '—'}</span>${p.estado ? `<br><span style="font-size:10px;color:var(--text-muted)">${p.estado}</span>` : ''}</td>
+      <td>${tipo}</td>
+      <td style="text-align:right"><span class="num-val" style="color:var(--green)">${valorFmt}</span></td>
+      <td style="font-size:11px;color:var(--text-soft)">${p.fluxo || '—'}</td>
+      <td style="font-size:11px;color:var(--text-soft)">${p.quem_fez || '—'}</td>
+      <td style="font-size:11px;color:var(--text-soft)">${p.pendencia || '—'}</td>
+      <td style="font-size:11px;color:var(--text-soft)">${p.quem_pendencia || '—'}</td>
+      <td style="font-size:11px;color:var(--text-muted)">${p.obs || '—'}</td>
+      <td><button class="proposta-edit-btn" onclick="abrirModalEditarProposta(${p.id})">Editar</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function carregarPropostas() {
+  fetch('/api/propostas')
+    .then(r => r.json())
+    .then(data => {
+      PROPOSTAS = data;
+      renderPropostasTable();
+    })
+    .catch(() => {});
+}
+
+function abrirModalCadastrarProposta() {
+  document.getElementById('propostaId').value = '';
+  document.getElementById('propMatricula').value = '';
+  document.getElementById('propValorVenda').value = '';
+  document.getElementById('propFluxo').value = '';
+  document.getElementById('propQuemFez').value = '';
+  document.getElementById('propPendencia').value = '';
+  document.getElementById('propQuemPendencia').value = '';
+  document.getElementById('propObs').value = '';
+  document.getElementById('propMatHint').textContent = '';
+  document.getElementById('modalPropostaTitulo').textContent = '📝 Cadastrar Proposta';
+  document.getElementById('btnSalvarProposta').textContent = 'Salvar Proposta';
+  document.getElementById('modalProposta').classList.add('open');
+}
+
+function abrirModalEditarProposta(id) {
+  const p = PROPOSTAS.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('propostaId').value = p.id;
+  document.getElementById('propMatricula').value = p.matricula || '';
+  document.getElementById('propValorVenda').value = p.valor_venda || '';
+  document.getElementById('propFluxo').value = p.fluxo || '';
+  document.getElementById('propQuemFez').value = p.quem_fez || '';
+  document.getElementById('propPendencia').value = p.pendencia || '';
+  document.getElementById('propQuemPendencia').value = p.quem_pendencia || '';
+  document.getElementById('propObs').value = p.obs || '';
+  atualizarHintMatricula(p.matricula);
+  document.getElementById('modalPropostaTitulo').textContent = '✏️ Editar Proposta';
+  document.getElementById('btnSalvarProposta').textContent = 'Atualizar Proposta';
+  document.getElementById('modalProposta').classList.add('open');
+}
+
+function fecharModalProposta() {
+  document.getElementById('modalProposta').classList.remove('open');
+}
+
+function atualizarHintMatricula(mat) {
+  const hint = document.getElementById('propMatHint');
+  if (!mat) { hint.textContent = ''; return; }
+  const match = PROPERTIES.find(p => String(p.mat).trim().toLowerCase() === mat.trim().toLowerCase());
+  if (match) {
+    hint.textContent = `✓ ${match.tipologia || ''} — ${match.cidade || ''}${match.estado ? '/' + match.estado : ''}`;
+    hint.style.color = 'var(--green)';
+  } else {
+    hint.textContent = 'Matrícula não encontrada no banco de imóveis';
+    hint.style.color = 'var(--amber)';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btnCadastrarProposta').addEventListener('click', abrirModalCadastrarProposta);
+  document.getElementById('propMatricula').addEventListener('input', (e) => atualizarHintMatricula(e.target.value));
+  document.getElementById('btnCadastrarVenda').addEventListener('click', abrirModalVenda);
+  document.getElementById('vendaMatricula').addEventListener('input', (e) => atualizarHintVenda(e.target.value));
+  carregarPropostas();
+});
+
+// ── VENDA ─────────────────────────────────────────────────────────────
+function abrirModalVenda() {
+  document.getElementById('vendaMatricula').value = '';
+  document.getElementById('vendaData').value = '';
+  document.getElementById('vendaComprador').value = '';
+  document.getElementById('vendaValorTotal').value = '';
+  document.getElementById('vendaRecebido').value = '';
+  document.getElementById('vendaFluxo').value = '';
+  document.getElementById('vendaPendencia').value = '';
+  document.getElementById('vendaQuemPendencia').value = '';
+  document.getElementById('vendaObs').value = '';
+  document.getElementById('vendaMatHint').textContent = '';
+  document.getElementById('vendaMatHint').style.color = 'var(--accent)';
+  document.getElementById('btnSalvarVenda').disabled = false;
+  document.getElementById('modalVenda').classList.add('open');
+}
+
+function fecharModalVenda() {
+  document.getElementById('modalVenda').classList.remove('open');
+}
+
+function atualizarHintVenda(mat) {
+  const hint = document.getElementById('vendaMatHint');
+  const btn  = document.getElementById('btnSalvarVenda');
+  if (!mat) { hint.textContent = ''; btn.disabled = false; return; }
+
+  const match = PROPERTIES.find(p => String(p.mat).trim().toLowerCase() === mat.trim().toLowerCase());
+  if (!match) {
+    hint.textContent = 'Matrícula não encontrada no banco de imóveis';
+    hint.style.color = 'var(--amber)';
+    btn.disabled = false;
+    return;
+  }
+
+  const isVendido = (match.statusVenda || '').trim().toLowerCase() === 'vendido';
+  if (isVendido) {
+    hint.textContent = '✗ Este imóvel já está com status Vendido';
+    hint.style.color = 'var(--red)';
+    btn.disabled = true;
+  } else {
+    hint.textContent = `✓ ${match.tipologia || ''} — ${match.cidade || ''}${match.estado ? '/' + match.estado : ''}`;
+    hint.style.color = 'var(--green)';
+    btn.disabled = false;
+  }
+}
+
+function salvarVenda() {
+  const matricula = document.getElementById('vendaMatricula').value.trim();
+  if (!matricula) { alert('Matrícula é obrigatória.'); return; }
+
+  const match = PROPERTIES.find(p => String(p.mat).trim().toLowerCase() === matricula.toLowerCase());
+  if (match && (match.statusVenda || '').trim().toLowerCase() === 'vendido') {
+    alert('Este imóvel já está com status Vendido.'); return;
+  }
+
+  const dataRaw = document.getElementById('vendaData').value;
+  let dataFormatada = null;
+  if (dataRaw) {
+    const [y, m, d] = dataRaw.split('-');
+    dataFormatada = `${d}/${m}/${y}`;
+  }
+
+  const payload = {
+    matricula,
+    data_venda:           dataFormatada,
+    comprador:            document.getElementById('vendaComprador').value.trim() || null,
+    valor_venda_total:    parseFloat(document.getElementById('vendaValorTotal').value) || null,
+    recebido:             parseFloat(document.getElementById('vendaRecebido').value) || null,
+    fluxo_venda:          document.getElementById('vendaFluxo').value.trim() || null,
+    pendencia_venda:      document.getElementById('vendaPendencia').value.trim() || null,
+    quem_pendencia_venda: document.getElementById('vendaQuemPendencia').value.trim() || null,
+    obs:                  document.getElementById('vendaObs').value.trim() || null,
+  };
+
+  fetch('/api/vendas', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+    .then(r => {
+      if (!r.ok) return r.json().then(e => Promise.reject(e.error || 'Erro ao salvar'));
+      return r.json();
+    })
+    .then(() => {
+      fecharModalVenda();
+      showToast('✅ Venda registrada com sucesso');
+      // Reload properties and re-render
+      fetch('/api/imoveis')
+        .then(r => r.json())
+        .then(data => {
+          PROPERTIES = data;
+          renderAll();
+        });
+    })
+    .catch(err => showToast('❌ ' + err, true));
+}
+
+function salvarProposta() {
+  const id = document.getElementById('propostaId').value;
+  const matricula = document.getElementById('propMatricula').value.trim();
+  if (!matricula) { alert('Matrícula é obrigatória.'); return; }
+
+  const payload = {
+    matricula,
+    valor_venda: parseFloat(document.getElementById('propValorVenda').value) || null,
+    fluxo:          document.getElementById('propFluxo').value.trim() || null,
+    quem_fez:       document.getElementById('propQuemFez').value.trim() || null,
+    pendencia:      document.getElementById('propPendencia').value.trim() || null,
+    quem_pendencia: document.getElementById('propQuemPendencia').value.trim() || null,
+    obs:            document.getElementById('propObs').value.trim() || null,
+  };
+
+  const isEdit = !!id;
+  const url = isEdit ? `/api/propostas/${id}` : '/api/propostas';
+  const method = isEdit ? 'PUT' : 'POST';
+
+  fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+    .then(r => {
+      if (!r.ok) return r.json().then(e => Promise.reject(e.error || 'Erro ao salvar'));
+      return r.json();
+    })
+    .then(() => {
+      fecharModalProposta();
+      carregarPropostas();
+      showToast(isEdit ? '✅ Proposta atualizada com sucesso' : '✅ Proposta cadastrada com sucesso');
+    })
+    .catch(err => showToast('❌ ' + err, true));
+}
 </script>
 </body>
 </html>

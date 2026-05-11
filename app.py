@@ -2,7 +2,7 @@
 
 import os
 from datetime import date, datetime
-from flask import Flask, jsonify, render_template, send_from_directory
+from flask import Flask, jsonify, render_template, request, send_from_directory
 
 import database
 
@@ -465,10 +465,92 @@ def api_imoveis():
             "previsaoRegistro": row.get("previsao_registro"),
             "lat":              to_float(row.get("lat")),
             "lng":              to_float(row.get("lng")),
+            "dataVenda":        row.get("data_venda"),
+            "valorVendaTotal":  to_float(row.get("valor_venda_total")),
+            "fluxoVenda":       row.get("fluxo_venda"),
+            "pendenciaVenda":   row.get("pendencia_venda"),
+            "quemPendenciaVenda": row.get("quem_pendencia_venda"),
         }
         for row in rows
     ]
     return jsonify(properties)
+
+
+@app.route("/api/vendas", methods=["POST"])
+def api_criar_venda():
+    data = request.get_json(force=True)
+    if not data or not data.get("matricula"):
+        return jsonify({"error": "matricula obrigatória"}), 400
+
+    imovel = database.get_imovel_by_mat(data["matricula"])
+    if not imovel:
+        return jsonify({"error": "Imóvel não encontrado para esta matrícula"}), 404
+
+    status_atual = (imovel.get("status") or "").strip().lower()
+    if status_atual == "vendido":
+        return jsonify({"error": "Este imóvel já está com status Vendido"}), 409
+
+    update_data = {
+        "status":               "Vendido",
+        "comprador":            data.get("comprador"),
+        "proposta":             data.get("recebido"),
+        "obs":                  data.get("obs"),
+        "data_venda":           data.get("data_venda"),
+        "valor_venda_total":    data.get("valor_venda_total"),
+        "fluxo_venda":          data.get("fluxo_venda"),
+        "pendencia_venda":      data.get("pendencia_venda"),
+        "quem_pendencia_venda": data.get("quem_pendencia_venda"),
+    }
+    update_data = {k: v for k, v in update_data.items() if v is not None}
+    database.update_imovel(imovel["id"], update_data)
+    return jsonify({"ok": True}), 200
+
+
+@app.route("/api/propostas", methods=["GET"])
+def api_get_propostas():
+    rows = database.get_all_propostas()
+    imoveis = database.get_all_imoveis()
+    imovel_by_mat = {str(r.get("mat_tipo", "")).strip(): r for r in imoveis}
+
+    result = []
+    for p in rows:
+        mat = str(p.get("matricula", "")).strip()
+        imovel = imovel_by_mat.get(mat, {})
+        result.append({
+            "id":             p["id"],
+            "matricula":      p["matricula"],
+            "valor_venda":    p["valor_venda"],
+            "fluxo":          p["fluxo"],
+            "quem_fez":       p["quem_fez"],
+            "pendencia":      p["pendencia"],
+            "quem_pendencia": p["quem_pendencia"],
+            "obs":            p["obs"],
+            "tipologia":      imovel.get("tipologia"),
+            "cidade":         imovel.get("cidade"),
+            "estado":         imovel.get("estado"),
+            "tipo":           imovel.get("tipo_imovel"),
+        })
+    return jsonify(result)
+
+
+@app.route("/api/propostas", methods=["POST"])
+def api_create_proposta():
+    data = request.get_json(force=True)
+    if not data or not data.get("matricula"):
+        return jsonify({"error": "matricula obrigatória"}), 400
+    new_id = database.insert_proposta(data)
+    return jsonify({"id": new_id}), 201
+
+
+@app.route("/api/propostas/<int:proposta_id>", methods=["PUT"])
+def api_update_proposta(proposta_id):
+    data = request.get_json(force=True)
+    if not data:
+        return jsonify({"error": "body vazio"}), 400
+    updated = database.update_proposta(proposta_id, data)
+    if not updated:
+        return jsonify({"error": "proposta não encontrada"}), 404
+    return jsonify({"ok": True})
 
 
 @app.route("/api/dashboard")
