@@ -422,14 +422,14 @@ def dashboard_payload() -> dict:
 
 @app.route("/")
 def index():
-    return render_template("index.html")
-
-
-@app.route("/imoveis")
-def imoveis_dashboard():
     return send_from_directory(
         os.path.join(app.root_path, "dashboard_rafa"), "index.html"
     )
+
+
+@app.route("/casos")
+def casos_dashboard():
+    return render_template("index.html")
 
 
 @app.route("/api/imoveis")
