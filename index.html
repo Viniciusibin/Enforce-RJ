@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BTG / Enforce &mdash; Portfolio de Im&oacute;veis</title>
+  <title>BTG / Enforce &mdash; Dashboard Anal&iacute;tico RJ/F</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -685,6 +685,44 @@
     .cmp-vm { background: var(--primary); }
     .cmp-vf { background: var(--accent); }
     .cmp-gi { background: var(--amber); }
+
+    /* ── SALES GROUPS ──────────────────────────────────────── */
+    .sales-group { margin-bottom: 28px; }
+    .sales-group-hdr {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 20px;
+      border-radius: var(--radius) var(--radius) 0 0;
+      border: 1px solid; border-bottom: none;
+    }
+    .sales-group-hdr.g-green { background: rgba(16,185,129,.06); border-color: rgba(16,185,129,.28); }
+    .sales-group-hdr.g-amber { background: rgba(245,158,11,.06); border-color: rgba(245,158,11,.28); }
+    .sales-group-hdr.g-blue  { background: rgba(59,130,246,.06); border-color: rgba(59,130,246,.28); }
+    .sg-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+    .g-green .sg-dot { background:var(--green); box-shadow:0 0 7px rgba(16,185,129,.6); }
+    .g-amber .sg-dot { background:var(--amber); box-shadow:0 0 7px rgba(245,158,11,.6); }
+    .g-blue  .sg-dot { background:var(--primary); box-shadow:0 0 7px rgba(59,130,246,.6); }
+    .sg-text { flex: 1; min-width: 0; }
+    .sg-title { font-size:13px; font-weight:700; color:var(--text); }
+    .sg-desc  { font-size:11px; color:var(--text-muted); margin-top:2px; }
+    .sg-count { flex-shrink:0; font-size:11px; font-weight:700; padding:3px 11px; border-radius:20px; }
+    .g-green .sg-count { background:rgba(16,185,129,.14); color:var(--green); }
+    .g-amber .sg-count { background:rgba(245,158,11,.14); color:var(--amber); }
+    .g-blue  .sg-count { background:rgba(59,130,246,.14); color:#60a5fa; }
+    .sales-group-body {
+      border: 1px solid; border-top: none;
+      border-radius: 0 0 var(--radius) var(--radius);
+      overflow: hidden;
+    }
+    .sales-group-body > div { overflow-x: auto; }
+    .sales-group-body.g-green { border-color: rgba(16,185,129,.28); }
+    .sales-group-body.g-amber { border-color: rgba(245,158,11,.28); }
+    .sales-group-body.g-blue  { border-color: rgba(59,130,246,.28); }
+    .sg-total td {
+      border-top: 1px solid var(--border) !important;
+      background: var(--surface2) !important;
+      font-weight: 700; font-size: 11px;
+    }
+    .sg-empty { text-align:center; padding:22px; color:var(--text-muted); font-size:12px; }
   </style>
 </head>
 <body>
@@ -694,7 +732,7 @@
     <div class="logo-badge">BE</div>
     <div class="logo-text">
       <div class="logo-title">BTG / Enforce</div>
-      <div class="logo-sub">Portfolio de Im&oacute;veis &mdash; Dashboard Anal&iacute;tico</div>
+      <div class="logo-sub">Dashboard Anal&iacute;tico RJ/F</div>
     </div>
   </div>
   <div class="header-meta">
@@ -766,27 +804,96 @@
 
   </div>
 
-  <!-- TABELA DE VENDAS -->
-  <div class="section-title">Listagem das Vendas</div>
-  <div class="card" style="margin-bottom:24px;overflow-x:auto">
-    <table class="sold-table" id="salesTable">
-      <thead>
-        <tr>
-          <th>Mat.</th>
-          <th>Tipologia</th>
-          <th>Cidade / UF</th>
-          <th>Tipo</th>
-          <th style="text-align:right">VM Enforce</th>
-          <th style="text-align:right">VF Enforce</th>
-          <th style="text-align:right">Proposta</th>
-          <th>Status</th>
-          <th>Comprador</th>
-          <th>Prev. Registro</th>
-          <th>Obs</th>
-        </tr>
-      </thead>
-      <tbody id="salesTableBody"></tbody>
-    </table>
+  <!-- TABELAS DE VENDAS -->
+  <div class="section-title">Gestão de Vendas</div>
+
+  <!-- Imóveis Quitados -->
+  <div class="sales-group">
+    <div class="sales-group-hdr g-green">
+      <span class="sg-dot"></span>
+      <div class="sg-text">
+        <div class="sg-title">Imóveis Quitados</div>
+        <div class="sg-desc">Vendidos com remanescente zerado</div>
+      </div>
+      <span class="sg-count" id="countQuitados">—</span>
+    </div>
+    <div class="sales-group-body g-green"><div>
+      <table class="sold-table">
+        <thead>
+          <tr>
+            <th>Mat.</th>
+            <th>Tipologia</th>
+            <th>Cidade / UF</th>
+            <th style="text-align:right">VM Enforce</th>
+            <th style="text-align:right">Valor Venda</th>
+            <th style="text-align:right">Recebido</th>
+            <th>Comprador</th>
+            <th>Data Baixa</th>
+          </tr>
+        </thead>
+        <tbody id="quitadosTableBody"></tbody>
+      </table>
+    </div></div>
+  </div>
+
+  <!-- Imóveis Vendidos com Fluxo Pendente -->
+  <div class="sales-group">
+    <div class="sales-group-hdr g-amber">
+      <span class="sg-dot"></span>
+      <div class="sg-text">
+        <div class="sg-title">Imóveis Vendidos com Fluxo Pendente</div>
+        <div class="sg-desc">Vendidos com remanescente a receber</div>
+      </div>
+      <span class="sg-count" id="countPendentes">—</span>
+    </div>
+    <div class="sales-group-body g-amber"><div>
+      <table class="sold-table">
+        <thead>
+          <tr>
+            <th>Mat.</th>
+            <th>Tipologia</th>
+            <th>Cidade / UF</th>
+            <th style="text-align:right">VM Enforce</th>
+            <th style="text-align:right">Valor Venda</th>
+            <th style="text-align:right">Recebido</th>
+            <th style="text-align:right">Remanescente</th>
+            <th>Comprador</th>
+            <th>Critério de Pagamento</th>
+          </tr>
+        </thead>
+        <tbody id="pendentesTableBody"></tbody>
+      </table>
+    </div></div>
+  </div>
+
+  <!-- Imóveis com Proposta -->
+  <div class="sales-group">
+    <div class="sales-group-hdr g-blue">
+      <span class="sg-dot"></span>
+      <div class="sg-text">
+        <div class="sg-title">Imóveis com Proposta</div>
+        <div class="sg-desc">Em negociação ativa</div>
+      </div>
+      <span class="sg-count" id="countPropostas">—</span>
+    </div>
+    <div class="sales-group-body g-blue"><div>
+      <table class="sold-table">
+        <thead>
+          <tr>
+            <th>Mat.</th>
+            <th>Tipologia</th>
+            <th>Cidade / UF</th>
+            <th>Tipo</th>
+            <th style="text-align:right">VM Enforce</th>
+            <th style="text-align:right">VF Enforce</th>
+            <th style="text-align:right">Proposta</th>
+            <th>Status</th>
+            <th>Comprador</th>
+          </tr>
+        </thead>
+        <tbody id="propostasTableBody"></tbody>
+      </table>
+    </div></div>
   </div>
 
   <!-- TABLE -->
@@ -827,6 +934,7 @@
             <th data-col="vf_enforce">VF Enforce <span class="sort-icon">←•</span></th>
             <th data-col="area">Area <span class="sort-icon">←•</span></th>
             <th data-col="tabelaGI">Tabela GI <span class="sort-icon">←•</span></th>
+            <th data-col="statusVenda">Status de Venda <span class="sort-icon">←•</span></th>
             <th data-col="comprador">Comprador <span class="sort-icon">←•</span></th>
             <th data-col="previsaoRegistro">Previsão de Registro <span class="sort-icon">←•</span></th>
             <th data-col="obs">Obs</th>
@@ -1015,11 +1123,14 @@ let FLUXO = {
   totalRecebido: 21800000,
   totalRemanescente: 38464568.16,
   linhas: [
-    { mat: '6.896',                              recebido: 5400000,  remanescente: 12600000,    dataBaixa: '05/11/2025', criterio: '30% à vista e restante pago na data da escritura sem correção',        comprador: 'MC Incorporações',                 valorVenda: 18000000 },
-    { mat: '579',                                recebido: 900000,   remanescente: null,         dataBaixa: '30/10/2025 e 31/10/2025', criterio: '',                                                       comprador: 'Eucamed',                          valorVenda: 900000   },
-    { mat: '1.479, 6.193, 23.697, 9.846, 5.377',recebido: 10400000, remanescente: 20964568.16,  dataBaixa: '02/01/2016', criterio: '+ 3 parcelas anuais de R$ 5.200.000,00 corrigidas a CDI + 1,5% a.a', comprador: 'Cooperativa INTEGRADA',            valorVenda: 26000000 },
-    { mat: '1615',                               recebido: 2100000,  remanescente: 4900000,      dataBaixa: '13/03/2026', criterio: '30% à vista e restante pago na data da escritura sem correção',   comprador: 'Cooperativa Agricola de Canoinhas',valorVenda: 7000000  },
-    { mat: '1.756, 1.757, 1.758 E 1.759',        recebido: 3000000,  remanescente: null,         dataBaixa: '12/01/2026', criterio: 'Indenização relacionada a depreciação de imóvel adjudicado',          comprador: '—',                                valorVenda: 3000000  },
+    { mat: '6.896',                   recebido: 5400000,  remanescente: 12600000,   dataBaixa: '05/11/2025', criterio: '30% à vista e restante pago na data da escritura sem correção',        comprador: 'MC Incorporações',                 valorVenda: 18000000 },
+    { mat: '579',                     recebido: 900000,   remanescente: null,        dataBaixa: '30/10/2025 e 31/10/2025', criterio: '',                                                                    comprador: 'Eucamed',                          valorVenda: 900000   },
+    { mat: '6193',                    recebido: null,     remanescente: null,        pendente: true,                       criterio: '',                                                                    comprador: 'Cooperativa INTEGRADA',            valorVenda: null     },
+    { mat: '5377',                    recebido: null,     remanescente: null,        pendente: true,                       criterio: '',                                                                    comprador: 'Cooperativa INTEGRADA',            valorVenda: null     },
+    { mat: '9846',                    recebido: null,     remanescente: null,        pendente: true,                       criterio: '',                                                                    comprador: 'Cooperativa INTEGRADA',            valorVenda: null     },
+    { mat: '23697',                   recebido: 10400000, remanescente: 20964568.16, dataBaixa: '02/01/2016',              criterio: '+ 3 parcelas anuais de R$ 5.200.000,00 corrigidas a CDI + 1,5% a.a', comprador: 'Cooperativa INTEGRADA',            valorVenda: 26000000 },
+    { mat: '1615',                    recebido: 2100000,  remanescente: 4900000,     dataBaixa: '13/03/2026',              criterio: '30% à vista e restante pago na data da escritura sem correção',       comprador: 'Cooperativa Agricola de Canoinhas',valorVenda: 7000000  },
+    { mat: '1.756, 1.757, 1.758 E 1.759', recebido: 3000000, remanescente: null,    dataBaixa: '12/01/2026',              criterio: 'Indenização relacionada a depreciação de imóvel adjudicado',          comprador: '—',                                valorVenda: 3000000  },
   ]
 };
 
@@ -1430,44 +1541,124 @@ function renderValueBars() {
   `).join('');
 }
 
-// ── SALES TABLE ───────────────────────────────────────────────────────
+// ── SALES TABLES ──────────────────────────────────────────────────────
 function renderSalesTable() {
-  const salesStatuses = ['vendido', 'proposta em negociação', 'proposta em fase de minuta'];
-  const rows = PROPERTIES.filter(p => {
-    const sv = (p.statusVenda || '').trim().toLowerCase();
-    return salesStatuses.includes(sv) || !!SALES[p.mat];
-  }).sort((a, b) => {
-    // Vendidos primeiro, depois propostas
-    const order = { 'vendido': 0, 'proposta em fase de minuta': 1, 'proposta em negociação': 2 };
-    const ao = order[(a.statusVenda||'').trim().toLowerCase()] ?? 3;
-    const bo = order[(b.statusVenda||'').trim().toLowerCase()] ?? 3;
-    return ao !== bo ? ao - bo : (b.proposta||0) - (a.proposta||0);
-  });
+  // Normaliza mat para matching (remove pontos usados como separador de milhar)
+  const normMat = (s) => String(s).trim().replace(/\./g, '');
 
-  const statusColor = (sv) => {
-    const s = (sv||'').trim().toLowerCase();
-    if (s === 'vendido') return '<span class="chip chip-green" style="font-size:10px">Vendido</span>';
-    if (s === 'proposta em fase de minuta') return '<span class="chip chip-amber" style="font-size:10px">Fase de Minuta</span>';
-    if (s === 'proposta em negociação') return '<span class="chip" style="background:rgba(59,130,246,.15);color:#60a5fa;font-size:10px">Em Negociação</span>';
-    return `<span class="chip chip-gray" style="font-size:10px">${sv||'—'}</span>`;
+  // Mapeia mat normalizado → linha do FLUXO
+  const fluxoMap = {};
+  FLUXO.linhas.forEach(l => {
+    l.mat.split(/,|\s+[Ee]\s+/).forEach(m => {
+      const k = normMat(m);
+      if (k) fluxoMap[k] = l;
+    });
+  });
+  const getFluxo = (mat) => fluxoMap[normMat(mat)] || null;
+
+  const isVendido = (p) => (p.statusVenda || '').trim().toLowerCase() === 'vendido';
+  const isProposta = (p) => {
+    const sv = (p.statusVenda || '').trim().toLowerCase();
+    return sv === 'proposta em negociação' || sv === 'proposta em fase de minuta';
   };
 
-  document.getElementById('salesTableBody').innerHTML = rows.map(p => {
-    const proposta = p.proposta || 0;
-    return `<tr>
-      <td style="font-weight:600;color:var(--text)">${p.mat}</td>
-      <td>${p.tipologia}</td>
-      <td><span style="color:var(--text)">${p.cidade}</span> <span style="color:var(--text-muted);font-size:10px">${p.estado}</span></td>
-      <td>${p.tipo === 'Rural' ? '<span class="chip chip-green" style="font-size:10px">Rural</span>' : '<span class="chip chip-blue" style="font-size:10px">Urbano</span>'}</td>
-      <td style="text-align:right"><span class="num-val">${fmt(p.vm)}</span></td>
-      <td style="text-align:right"><span class="num-val">${fmt(p.vf)}</span></td>
-      <td style="text-align:right"><span class="num-val" style="color:var(--green)">${proposta > 0 ? fmt(proposta) : '—'}</span></td>
-      <td>${statusColor(p.statusVenda)}</td>
-      <td style="font-size:11px;color:var(--text-soft)">${p.comprador || '—'}</td>
-      <td style="font-size:11px;color:var(--text-soft);white-space:nowrap">${p.previsaoRegistro || '—'}</td>
-      <td style="font-size:11px;color:var(--text-muted)">${p.obs || '—'}</td>
-    </tr>`;
-  }).join('') || `<tr><td colspan="11" style="text-align:center;color:var(--text-muted)">Nenhuma venda encontrada.</td></tr>`;
+  // Célula numérica helper
+  const numCell = (v, color) => {
+    const f = fmt(v);
+    if (f === '—') return '<span style="color:var(--text-muted)">—</span>';
+    return color
+      ? `<span class="num-val" style="color:${color}">${f}</span>`
+      : `<span class="num-val">${f}</span>`;
+  };
+
+  const countLabel = (n) => `${n} imóve${n === 1 ? 'l' : 'is'}`;
+
+  // 1. Imóveis Quitados: vendido + sem remanescente
+  const quitados = PROPERTIES
+    .filter(p => isVendido(p) && !(getFluxo(p.mat)?.remanescente > 0))
+    .sort((a, b) => (b.vm || 0) - (a.vm || 0));
+
+  // 2. Imóveis com fluxo pendente: vendido + remanescente > 0 OU marcado como pendente
+  const pendentes = PROPERTIES
+    .filter(p => { if (!isVendido(p)) return false; const fl = getFluxo(p.mat); return fl && (fl.remanescente > 0 || fl.pendente); })
+    .sort((a, b) => (a.vm || 0) - (b.vm || 0));
+
+  // 3. Imóveis com proposta: em negociação ou em fase de minuta
+  const propostas = PROPERTIES
+    .filter(isProposta)
+    .sort((a, b) => (b.proposta || 0) - (a.proposta || 0));
+
+  // ── Render: Quitados ──
+  document.getElementById('countQuitados').textContent = countLabel(quitados.length);
+  document.getElementById('quitadosTableBody').innerHTML = quitados.length
+    ? quitados.map(p => {
+        const fl = getFluxo(p.mat);
+        return `<tr>
+          <td style="font-weight:600;color:var(--text)">${p.mat}</td>
+          <td>${p.tipologia}</td>
+          <td><span style="color:var(--text)">${p.cidade}</span> <span style="color:var(--text-muted);font-size:10px">${p.estado}</span></td>
+          <td style="text-align:right">${numCell(p.vm)}</td>
+          <td style="text-align:right">${numCell(fl?.valorVenda, 'var(--green)')}</td>
+          <td style="text-align:right">${numCell(fl?.recebido)}</td>
+          <td style="font-size:11px;color:var(--text-soft)">${fl?.comprador || p.comprador || '—'}</td>
+          <td style="font-size:11px;color:var(--text-soft);white-space:nowrap">${fl?.dataBaixa || p.previsaoRegistro || '—'}</td>
+        </tr>`;
+      }).join('')
+    : `<tr><td colspan="8" class="sg-empty">Nenhum imóvel quitado encontrado.</td></tr>`;
+
+  // ── Render: Fluxo Pendente ──
+  document.getElementById('countPendentes').textContent = countLabel(pendentes.length);
+  // Total remanescente sem duplicar linhas de FLUXO
+  const seenFluxo = new Set();
+  let totalRem = 0;
+  pendentes.forEach(p => {
+    const fl = getFluxo(p.mat);
+    if (fl && !seenFluxo.has(fl)) { totalRem += fl.remanescente || 0; seenFluxo.add(fl); }
+  });
+
+  document.getElementById('pendentesTableBody').innerHTML = pendentes.length
+    ? pendentes.map(p => {
+        const fl = getFluxo(p.mat);
+        return `<tr>
+          <td style="font-weight:600;color:var(--text)">${p.mat}</td>
+          <td>${p.tipologia}</td>
+          <td><span style="color:var(--text)">${p.cidade}</span> <span style="color:var(--text-muted);font-size:10px">${p.estado}</span></td>
+          <td style="text-align:right">${numCell(p.vm)}</td>
+          <td style="text-align:right">${numCell(fl?.valorVenda, 'var(--green)')}</td>
+          <td style="text-align:right">${numCell(fl?.recebido)}</td>
+          <td style="text-align:right">${numCell(fl?.remanescente, 'var(--amber)')}</td>
+          <td style="font-size:11px;color:var(--text-soft)">${fl?.comprador || p.comprador || '—'}</td>
+          <td style="font-size:11px;color:var(--text-muted);max-width:240px;white-space:normal;line-height:1.4">${fl?.criterio || '—'}</td>
+        </tr>`;
+      }).join('') +
+      `<tr class="sg-total">
+        <td colspan="6" style="text-align:right;color:var(--text-muted)">Total Remanescente</td>
+        <td style="text-align:right">${numCell(totalRem, 'var(--amber)')}</td>
+        <td colspan="2"></td>
+      </tr>`
+    : `<tr><td colspan="9" class="sg-empty">Nenhum imóvel com fluxo pendente.</td></tr>`;
+
+  // ── Render: Propostas ──
+  const statusChipProposta = (sv) => {
+    if ((sv || '').toLowerCase().includes('minuta'))
+      return '<span class="chip chip-amber" style="font-size:10px">Fase de Minuta</span>';
+    return '<span class="chip" style="background:rgba(59,130,246,.15);color:#60a5fa;font-size:10px">Em Negociação</span>';
+  };
+
+  document.getElementById('countPropostas').textContent = countLabel(propostas.length);
+  document.getElementById('propostasTableBody').innerHTML = propostas.length
+    ? propostas.map(p => `<tr>
+        <td style="font-weight:600;color:var(--text)">${p.mat}</td>
+        <td>${p.tipologia}</td>
+        <td><span style="color:var(--text)">${p.cidade}</span> <span style="color:var(--text-muted);font-size:10px">${p.estado}</span></td>
+        <td>${p.tipo === 'Rural' ? '<span class="chip chip-green" style="font-size:10px">Rural</span>' : '<span class="chip chip-blue" style="font-size:10px">Urbano</span>'}</td>
+        <td style="text-align:right">${numCell(p.vm)}</td>
+        <td style="text-align:right">${numCell(p.vf)}</td>
+        <td style="text-align:right">${numCell(p.proposta, 'var(--primary)')}</td>
+        <td>${statusChipProposta(p.statusVenda)}</td>
+        <td style="font-size:11px;color:var(--text-soft)">${p.comprador || '—'}</td>
+      </tr>`).join('')
+    : `<tr><td colspan="9" class="sg-empty">Nenhum imóvel com proposta ativa.</td></tr>`;
 }
 
 // ── TABLE ─────────────────────────────────────────────────────────────
@@ -1500,6 +1691,13 @@ function tipoChip(t) {
   if (t === 'Urbano') return `<span class="chip chip-blue">Urbano</span>`;
   if (t === 'Rural') return `<span class="chip chip-green">Rural</span>`;
   return `<span class="chip chip-gray">${t}</span>`;
+}
+function statusVendaChip(sv) {
+  const s = (sv || '').trim().toLowerCase();
+  if (s === 'vendido') return `<span class="chip chip-green" style="font-size:10px">Vendido</span>`;
+  if (s === 'proposta em fase de minuta') return `<span class="chip chip-amber" style="font-size:10px">Fase de Minuta</span>`;
+  if (s === 'proposta em negociação') return `<span class="chip" style="background:rgba(59,130,246,.15);color:#60a5fa;font-size:10px">Em Negociação</span>`;
+  return `<span class="chip chip-gray" style="font-size:10px">Não Vendido</span>`;
 }
 
 function applyFilters() {
@@ -1553,11 +1751,12 @@ function renderTable() {
       <td><span class="num-val">${fmt(p.vf)}</span></td>
       <td>${fmtArea(p.area, p.unidade)}</td>
       <td>${(() => { const gi = parseNum(p.tabelaGI); return gi != null ? `<span class="num-val">${fmt(gi)}</span>` : p.tabelaGI && p.tabelaGI !== '-' ? `<span style="font-size:10px;color:var(--text-muted)">${p.tabelaGI}</span>` : '<span style="color:var(--text-muted)">—</span>'; })()}</td>
+      <td>${statusVendaChip(p.statusVenda)}</td>
       <td><span style="font-size:11px;color:var(--text-soft)">${p.comprador || '—'}</span></td>
       <td><span style="font-size:11px;color:var(--text-soft)">${p.previsaoRegistro || '—'}</span></td>
       <td><span style="color:var(--text-soft);font-size:11px">${p.obs || '—'}</span></td>
     </tr>
-  `).join('') || `<tr><td colspan="11" style="text-align:center;color:var(--text-muted)">Nenhum im&oacute;vel encontrado.</td></tr>`;
+  `).join('') || `<tr><td colspan="12" style="text-align:center;color:var(--text-muted)">Nenhum im&oacute;vel encontrado.</td></tr>`;
 
   document.getElementById('tableCount').textContent = tableDisplayMode === 'all'
     ? `${filteredData.length} imóveis • listagem completa`
