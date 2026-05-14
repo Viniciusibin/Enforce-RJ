@@ -1298,10 +1298,10 @@ let FLUXO = {
   linhas: [
     { mat: '6.896',                   recebido: 5400000,  remanescente: 12600000,   dataBaixa: '05/11/2025', criterio: '30% à vista e restante pago na data da escritura sem correção',        comprador: 'MC Incorporações',                 valorVenda: 18000000 },
     { mat: '579',                     recebido: 900000,   remanescente: null,        dataBaixa: '30/10/2025 e 31/10/2025', criterio: '',                                                                    comprador: 'Eucamed',                          valorVenda: 900000   },
-    { mat: '6193',                    recebido: null,     remanescente: null,        pendente: true,                       criterio: '',                                                                    comprador: 'Cooperativa INTEGRADA',            valorVenda: null     },
-    { mat: '5377',                    recebido: null,     remanescente: null,        pendente: true,                       criterio: '',                                                                    comprador: 'Cooperativa INTEGRADA',            valorVenda: null     },
-    { mat: '9846',                    recebido: null,     remanescente: null,        pendente: true,                       criterio: '',                                                                    comprador: 'Cooperativa INTEGRADA',            valorVenda: null     },
-    { mat: '23697',                   recebido: 10400000, remanescente: 20964568.16, dataBaixa: '02/01/2016',              criterio: '+ 3 parcelas anuais de R$ 5.200.000,00 corrigidas a CDI + 1,5% a.a', comprador: 'Cooperativa INTEGRADA',            valorVenda: 26000000 },
+    { mat: '6193',                    recebido: null,     remanescente: null,        pendente: true,  ordem: 1,            criterio: '',                                                                    comprador: 'Cooperativa INTEGRADA',            valorVenda: null     },
+    { mat: '5377',                    recebido: null,     remanescente: null,        pendente: true,  ordem: 2,            criterio: '',                                                                    comprador: 'Cooperativa INTEGRADA',            valorVenda: null     },
+    { mat: '9846',                    recebido: null,     remanescente: null,        pendente: true,  ordem: 3,            criterio: '',                                                                    comprador: 'Cooperativa INTEGRADA',            valorVenda: null     },
+    { mat: '23697',                   recebido: 10400000, remanescente: 20964568.16, dataBaixa: '02/01/2016', ordem: 4,   criterio: '+ 3 parcelas anuais de R$ 5.200.000,00 corrigidas a CDI + 1,5% a.a', comprador: 'Cooperativa INTEGRADA',            valorVenda: 26000000 },
     { mat: '1615',                    recebido: 2100000,  remanescente: 4900000,     dataBaixa: '13/03/2026',              criterio: '30% à vista e restante pago na data da escritura sem correção',       comprador: 'Cooperativa Agricola de Canoinhas',valorVenda: 7000000  },
     { mat: '1.756, 1.757, 1.758 E 1.759', recebido: 3000000, remanescente: null,    dataBaixa: '12/01/2026',              criterio: 'Indenização relacionada a depreciação de imóvel adjudicado',          comprador: '—',                                valorVenda: 3000000  },
   ]
@@ -1754,7 +1754,11 @@ function renderSalesTable() {
 
   const pendentes = PROPERTIES
     .filter(p => { if (!isVendido(p)) return false; const fl = getFluxo(p.mat); return fl && (fl.remanescente > 0 || fl.pendente); })
-    .sort((a, b) => (a.vm || 0) - (b.vm || 0));
+    .sort((a, b) => {
+      const oa = getFluxo(a.mat)?.ordem ?? 999;
+      const ob = getFluxo(b.mat)?.ordem ?? 999;
+      return oa !== ob ? oa - ob : (a.vm || 0) - (b.vm || 0);
+    });
 
   const propostas = PROPERTIES
     .filter(isProposta)
