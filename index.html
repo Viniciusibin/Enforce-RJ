@@ -659,6 +659,54 @@
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
+    /* ── TAB NAVIGATION ─────────────────────────────── */
+    .tab-nav {
+      background: linear-gradient(135deg, #0a1628 0%, #0e2040 100%);
+      border-bottom: 2px solid var(--border);
+      padding: 0 32px;
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      position: sticky;
+      top: 68px;
+      z-index: 999;
+    }
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px 10px;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: 10px 10px 0 0;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: .01em;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { color: var(--text); background: rgba(255,255,255,.04); }
+    .tab-btn.active {
+      color: var(--primary);
+      background: var(--bg);
+      border-color: var(--border);
+      border-bottom-color: var(--bg);
+      margin-bottom: -2px;
+    }
+    .tab-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 10px;
+      background: rgba(59,130,246,.15);
+      color: #60a5fa;
+    }
+    .tab-btn.active .tab-badge { background: rgba(59,130,246,.2); color: var(--primary); }
+
     .table-scroll { overflow-x: auto; }
 
     /* ── COMPARISON BAR ─────────────────────────────── */
@@ -685,6 +733,88 @@
     .cmp-vm { background: var(--primary); }
     .cmp-vf { background: var(--accent); }
     .cmp-gi { background: var(--amber); }
+
+    /* ── PROPOSTAS TABLE ────────────────────────────────── */
+    .propostas-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .propostas-table th {
+      text-align: left; padding: 9px 12px;
+      background: var(--surface2);
+      color: var(--text-muted); font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .06em;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .propostas-table td { padding: 10px 12px; border-bottom: 1px solid rgba(30,48,82,.45); vertical-align: middle; }
+    .propostas-table tr:last-child td { border-bottom: none; }
+    .propostas-table tr:hover td { background: var(--surface2); }
+
+    /* ── PROPOSTA MODAL FORM ────────────────────────────── */
+    .prop-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px 24px;
+    }
+    .prop-form-group { display: flex; flex-direction: column; gap: 6px; }
+    .prop-form-group.full { grid-column: 1 / -1; }
+    .prop-form-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+    .prop-form-input, .prop-form-textarea {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color .15s;
+      width: 100%;
+    }
+    .prop-form-input:focus, .prop-form-textarea:focus { border-color: var(--primary); }
+    .prop-form-textarea { resize: vertical; min-height: 64px; }
+    .prop-mat-hint {
+      font-size: 11px;
+      color: var(--accent);
+      margin-top: 4px;
+      min-height: 16px;
+    }
+    .prop-btn-row { display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px; }
+    .btn-primary {
+      background: var(--primary);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 9px 22px;
+      transition: opacity .15s;
+    }
+    .btn-primary:hover { opacity: .85; }
+    .btn-ghost {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      padding: 9px 18px;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-ghost:hover { border-color: var(--text-soft); color: var(--text); }
+    .proposta-edit-btn {
+      background: rgba(59,130,246,.12);
+      border: 1px solid rgba(59,130,246,.3);
+      border-radius: 6px;
+      color: #93c5fd;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      transition: background .15s;
+    }
+    .proposta-edit-btn:hover { background: rgba(59,130,246,.25); }
 
     /* ── SALES GROUPS ──────────────────────────────────────── */
     .sales-group { margin-bottom: 28px; }
@@ -738,11 +868,25 @@
   <div class="header-meta">
     <span class="live-badge"><span class="live-dot"></span><span id="liveCount">38</span> ativos</span>
     <span class="header-date" id="headerDate"></span>
+    <button class="import-btn" id="btnCadastrarVenda" style="background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35);color:#fca5a5">🏷️ Cadastrar Venda</button>
+    <button class="import-btn" id="btnCadastrarProposta" style="background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.35);color:#6ee7b7">📝 Cadastrar Proposta</button>
     <button class="import-btn" id="importBtn">📂 Importar Planilha</button>
     <input type="file" id="fileInput" accept=".xlsx,.xls,.ods" style="display:none" />
   </div>
 </header>
 <div class="import-toast" id="importToast"></div>
+
+<!-- TAB NAVIGATION -->
+<div class="tab-nav">
+  <button class="tab-btn active" id="tabCotia" onclick="switchTab('cotia')">
+    🏘️ Cotia
+    <span class="tab-badge" id="tabBadgeCotia">—</span>
+  </button>
+  <button class="tab-btn" id="tabCozac" onclick="switchTab('cozac')">
+    🏙️ Cozac
+    <span class="tab-badge" id="tabBadgeCozac">—</span>
+  </button>
+</div>
 
 <main>
   <!-- KPI CARDS -->
@@ -761,10 +905,10 @@
       <div class="kpi-sub">Soma VM Enforce</div>
     </div>
     <div class="kpi-card cyan">
-      <div class="kpi-icon">📉</div>
-      <div class="kpi-value" id="kpiVF">—</div>
-      <div class="kpi-label">Venda For&ccedil;ada Total (VF)</div>
-      <div class="kpi-sub">Soma VF Enforce</div>
+      <div class="kpi-icon">🤝</div>
+      <div class="kpi-value" id="kpiPropostas">—</div>
+      <div class="kpi-label">Soma das Propostas</div>
+      <div class="kpi-sub">Total em propostas recebidas</div>
     </div>
   </div>
 
@@ -896,6 +1040,31 @@
     </div></div>
   </div>
 
+  <!-- PROPOSTAS WORKFLOW TABLE (Rafael) -->
+  <div class="section-title">Listagem de Propostas</div>
+  <div class="card" style="margin-bottom:24px;overflow-x:auto" id="propostasCard">
+    <table class="propostas-table" id="propostasWorkflowTable">
+      <thead>
+        <tr>
+          <th>Mat&iacute;cula</th>
+          <th>Tipologia</th>
+          <th>Cidade / UF</th>
+          <th>Tipo</th>
+          <th style="text-align:right">Valor de Venda</th>
+          <th>Fluxo</th>
+          <th>Quem fez a proposta</th>
+          <th>Pend&ecirc;ncia</th>
+          <th>Quem est&aacute; com a pend&ecirc;ncia</th>
+          <th>Obs</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="propostasWorkflowBody">
+        <tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:24px">Nenhuma proposta cadastrada.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
   <!-- TABLE -->
   <div class="section-title">Listagem Detalhada dos Im&oacute;veis</div>
   <div class="card" style="margin-bottom:24px">
@@ -1018,6 +1187,109 @@
 
 </main>
 
+<!-- MODAL: Cadastrar / Editar Proposta -->
+<div class="modal-overlay" id="modalProposta">
+  <div class="modal-box" style="max-width:680px">
+    <div class="modal-header">
+      <span class="modal-title" id="modalPropostaTitulo">📝 Cadastrar Proposta</span>
+      <button class="modal-close" onclick="fecharModalProposta()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="propostaId" />
+      <div class="prop-form-grid">
+        <div class="prop-form-group">
+          <label class="prop-form-label">Matr&iacute;cula *</label>
+          <input class="prop-form-input" id="propMatricula" placeholder="Ex: 6.896" autocomplete="off" />
+          <div class="prop-mat-hint" id="propMatHint"></div>
+        </div>
+        <div class="prop-form-group">
+          <label class="prop-form-label">Valor de Venda</label>
+          <input class="prop-form-input" id="propValorVenda" placeholder="Ex: 1500000" type="number" min="0" step="0.01" />
+        </div>
+        <div class="prop-form-group full">
+          <label class="prop-form-label">Fluxo (como vai ser)</label>
+          <input class="prop-form-input" id="propFluxo" placeholder="Descreva o fluxo da proposta..." />
+        </div>
+        <div class="prop-form-group">
+          <label class="prop-form-label">Quem fez a proposta</label>
+          <input class="prop-form-input" id="propQuemFez" placeholder="Nome do responsável" />
+        </div>
+        <div class="prop-form-group">
+          <label class="prop-form-label">Pend&ecirc;ncia</label>
+          <input class="prop-form-input" id="propPendencia" placeholder="Descreva a pendência" />
+        </div>
+        <div class="prop-form-group full">
+          <label class="prop-form-label">Quem est&aacute; com a pend&ecirc;ncia</label>
+          <input class="prop-form-input" id="propQuemPendencia" placeholder="Nome do responsável pela pendência" />
+        </div>
+        <div class="prop-form-group full">
+          <label class="prop-form-label">Obs</label>
+          <textarea class="prop-form-textarea" id="propObs" placeholder="Observações adicionais..."></textarea>
+        </div>
+      </div>
+      <div class="prop-btn-row">
+        <button class="btn-ghost" onclick="fecharModalProposta()">Cancelar</button>
+        <button class="btn-primary" id="btnSalvarProposta" onclick="salvarProposta()">Salvar Proposta</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Cadastrar Venda -->
+<div class="modal-overlay" id="modalVenda">
+  <div class="modal-box" style="max-width:680px">
+    <div class="modal-header">
+      <span class="modal-title">🏷️ Cadastrar Venda</span>
+      <button class="modal-close" onclick="fecharModalVenda()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="prop-form-grid">
+        <div class="prop-form-group full">
+          <label class="prop-form-label">Matr&iacute;cula *</label>
+          <input class="prop-form-input" id="vendaMatricula" placeholder="Ex: 6.896" autocomplete="off" />
+          <div class="prop-mat-hint" id="vendaMatHint"></div>
+        </div>
+        <div class="prop-form-group">
+          <label class="prop-form-label">Data da Venda</label>
+          <input class="prop-form-input" id="vendaData" type="date" />
+        </div>
+        <div class="prop-form-group">
+          <label class="prop-form-label">Comprador</label>
+          <input class="prop-form-input" id="vendaComprador" placeholder="Nome do comprador" />
+        </div>
+        <div class="prop-form-group">
+          <label class="prop-form-label">Valor da Venda</label>
+          <input class="prop-form-input" id="vendaValorTotal" placeholder="Ex: 1500000" type="number" min="0" step="0.01" />
+        </div>
+        <div class="prop-form-group">
+          <label class="prop-form-label">Recebido</label>
+          <input class="prop-form-input" id="vendaRecebido" placeholder="Valor já recebido" type="number" min="0" step="0.01" />
+        </div>
+        <div class="prop-form-group full">
+          <label class="prop-form-label">Fluxo (como vai ser)</label>
+          <input class="prop-form-input" id="vendaFluxo" placeholder="Descreva o fluxo de pagamento..." />
+        </div>
+        <div class="prop-form-group">
+          <label class="prop-form-label">Pend&ecirc;ncia</label>
+          <input class="prop-form-input" id="vendaPendencia" placeholder="Descreva a pendência" />
+        </div>
+        <div class="prop-form-group">
+          <label class="prop-form-label">Quem est&aacute; com a pend&ecirc;ncia</label>
+          <input class="prop-form-input" id="vendaQuemPendencia" placeholder="Nome do responsável" />
+        </div>
+        <div class="prop-form-group full">
+          <label class="prop-form-label">Obs</label>
+          <textarea class="prop-form-textarea" id="vendaObs" placeholder="Observações adicionais..."></textarea>
+        </div>
+      </div>
+      <div class="prop-btn-row">
+        <button class="btn-ghost" onclick="fecharModalVenda()">Cancelar</button>
+        <button class="btn-primary" id="btnSalvarVenda" onclick="salvarVenda()" style="background:var(--red)">Registrar Venda</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: Imóveis Vendidos -->
 <div class="modal-overlay" id="modalVendidos">
   <div class="modal-box">
@@ -1071,68 +1343,45 @@
 
 <script>
 // ── DATA ─────────────────────────────────────────────────────────────
-let PROPERTIES = [
-  {mat:"8112",  tipologia:"Galpão",             cidade:"Santos",                estado:"SP",tipo:"Urbano",vm:21201520,   vf:15901140,   area:42000,   unidade:"m²",lat:-23.9618,lng:-46.3322,statusVenda:"Não Vendido",   obs:"-",                                          tabelaGI:25000000,  proposta:null},
-  {mat:"1756",  tipologia:"Agroindustria",       cidade:"Assis Chateaubriand",  estado:"PR",tipo:"Rural", vm:15039375,   vf:13197052,   area:13587.75,unidade:"ha",lat:-24.4167,lng:-53.5167,statusVenda:"Vendido",              obs:"Vendido — Indenização (MATS 1.756, 1.757, 1.758 E 1.759)",tabelaGI:null,proposta:3000000,  previsaoRegistro:"12/01/2026"},
-  {mat:"25510", tipologia:"Agroindustria",       cidade:"Dourados",             estado:"MS",tipo:"Rural", vm:13155059,   vf:11395570,   area:7.26,    unidade:"ha",lat:-22.2212,lng:-54.8055,statusVenda:"Não Vendido",   obs:"Em aprovação (comitê)",                   tabelaGI:null,      proposta:13000000, previsaoRegistro:"26/03/2026"},
-  {mat:"58840", tipologia:"Prédio Comercial",    cidade:"Vargem Grande Paulista",estado:"SP",tipo:"Urbano",vm:13145579,  vf:10516463,   area:1407,    unidade:"m²",lat:-23.6019,lng:-47.0300,statusVenda:"Proposta em Negociação",obs:"Proposta distante",               tabelaGI:45000000,  proposta:6000000,  previsaoRegistro:"01/07/2026"},
-  {mat:"23697", tipologia:"Agroindustria",       cidade:"—",                    estado:"PR",tipo:"Rural", vm:14301000,   vf:9790000,    area:null,    unidade:null,lat:-23.4208,lng:-51.9331,statusVenda:"Vendido",        obs:"Vendido (Integrada)",                    tabelaGI:null,      proposta:26000000, comprador:"Cooperativa INTEGRADA"},
-  {mat:"39606", tipologia:"Prédio Comercial",    cidade:"Jacareí",              estado:"SP",tipo:"Urbano",vm:8836364,    vf:7883985,    area:3250,    unidade:"m²",lat:-23.2947,lng:-45.9653,statusVenda:"Proposta em Negociação",obs:"Proposta em negociação - tabela de GI",tabelaGI:22500000, proposta:13000000, comprador:"Empresário da cidade"},
-  {mat:"2164",  tipologia:"Gleba",               cidade:"Taciba",               estado:"SP",tipo:"Rural", vm:8775718,    vf:7140620,    area:176.35,  unidade:"ha",lat:-22.3953,lng:-51.2800,statusVenda:"Não Vendido",   obs:"Arrendatário plantou eucalipto",         tabelaGI:null,      proposta:null},
-  {mat:"26999", tipologia:"Prédio Comercial",    cidade:"Bragança Paulista",    estado:"SP",tipo:"Urbano",vm:6484813,    vf:6484813,    area:4036.77, unidade:"m²",lat:-22.9516,lng:-46.5416,statusVenda:"Proposta em Negociação",obs:"Proposta em negociação - tabela de GI",tabelaGI:13000000, proposta:10000000},
-  {mat:"10565", tipologia:"Agroindustria",       cidade:"Fátima do Sul",        estado:"MS",tipo:"Rural", vm:6971320,    vf:5594484,    area:13.43,   unidade:"ha",lat:-22.5107,lng:-54.0507,statusVenda:"Não Vendido",   obs:"Sem proposta",                           tabelaGI:null,      proposta:null},
-  {mat:"145993",tipologia:"Gleba",               cidade:"Dourados",             estado:"MS",tipo:"Rural", vm:6108735,    vf:4956143,    area:87.83,   unidade:"ha",lat:-22.2512,lng:-54.7755,statusVenda:"Não Vendido",   obs:"Negociação em andamento",               tabelaGI:null,      proposta:null,     previsaoRegistro:"25/05/2026"},
-  {mat:"6896",  tipologia:"Terreno",             cidade:"Maringá",              estado:"PR",tipo:"Urbano",vm:6875426,    vf:4881552,    area:15000,   unidade:"m²",lat:-23.4205,lng:-51.9333,statusVenda:"Vendido",        obs:"Vendido",                                tabelaGI:18000000,  proposta:18000000, comprador:"MC Incorporações",        previsaoRegistro:"01/07/2026"},
-  {mat:"1615",  tipologia:"Agroindustria",       cidade:"Canoinhas",            estado:"SC",tipo:"Rural", vm:5570395,    vf:4741799,    area:32920,   unidade:"ha",lat:-26.1786,lng:-50.3917,statusVenda:"Vendido",              obs:"Vendido (Cooperativa Agricola de Canoinhas)",tabelaGI:null,proposta:7000000,comprador:"Cooperativa Agricola de Canoinhas",previsaoRegistro:"13/04/2026"},
-  {mat:"146005",tipologia:"Gleba",               cidade:"Dourados",             estado:"MS",tipo:"Rural", vm:5325769,    vf:4320907,    area:86.67,   unidade:"ha",lat:-22.2012,lng:-54.8355,statusVenda:"Não Vendido",   obs:"Negociação em andamento",               tabelaGI:null,      proposta:null,     previsaoRegistro:"25/05/2026"},
-  {mat:"4479",  tipologia:"Agroindustria",       cidade:"Mauá da Serra",        estado:"PR",tipo:"Rural", vm:4986949,    vf:4319945,    area:27104,   unidade:"ha",lat:-23.9000,lng:-51.2500,statusVenda:"Vendido",        obs:"Vendido (Integrada)",                    tabelaGI:null,      proposta:null,     comprador:"Cooperativa INTEGRADA"},
-  {mat:"9846",  tipologia:"Agroindustria",       cidade:"Floraí",               estado:"PR",tipo:"Rural", vm:4279250,    vf:3803183,    area:17430,   unidade:"ha",lat:-23.3156,lng:-52.2744,statusVenda:"Vendido",        obs:"Vendido (Integrada)",                    tabelaGI:null,      proposta:null,     comprador:"Cooperativa INTEGRADA",   previsaoRegistro:"02/10/2026"},
-  {mat:"5377",  tipologia:"Agroindustria",       cidade:"Rancho Alegre",        estado:"PR",tipo:"Rural", vm:3376178,    vf:3000578,    area:76230,   unidade:"ha",lat:-23.5978,lng:-51.0028,statusVenda:"Vendido",        obs:"Vendido (Integrada)",                    tabelaGI:null,      proposta:null,     comprador:"Cooperativa INTEGRADA",   previsaoRegistro:"02/10/2026"},
-  {mat:"35948", tipologia:"Prédio Comercial",    cidade:"Indaiatuba",           estado:"SP",tipo:"Urbano",vm:3076885,    vf:2615352,    area:2442,    unidade:"m²",lat:-23.0900,lng:-47.2197,statusVenda:"Proposta em Negociação",obs:"Proposta em negociação - tabela de GI",tabelaGI:5200000,  proposta:3500000,  comprador:"Investidor e Incorporadora",previsaoRegistro:"26/03/2026"},
-  {mat:"360",   tipologia:"Barracão",            cidade:"Piedade",              estado:"SP",tipo:"Urbano",vm:2199235,    vf:2199235,    area:3800,    unidade:"m²",lat:-23.9119,lng:-47.4267,statusVenda:"Não Vendido",   obs:"-",                                          tabelaGI:"NÃO LIBERADO",proposta:null,  previsaoRegistro:"26/03/2026"},
-  {mat:"2464",  tipologia:"Gleba",               cidade:"Assaí",                estado:"PR",tipo:"Rural", vm:2572652,    vf:2064553,    area:591690,  unidade:"ha",lat:-23.3694,lng:-50.8531,statusVenda:"Não Vendido",   obs:"Negociação em andamento",               tabelaGI:null,      proposta:null,     previsaoRegistro:"26/04/2026"},
-  {mat:"6193",  tipologia:"Agroindustria",       cidade:"Mauá da Serra",        estado:"PR",tipo:"Rural", vm:1893464,    vf:1640213,    area:20000,   unidade:"ha",lat:-23.9200,lng:-51.2300,statusVenda:"Vendido",        obs:"Vendido (Integrada)",                    tabelaGI:null,      proposta:null,     comprador:"Cooperativa INTEGRADA"},
-  {mat:"25766", tipologia:"Galpão",              cidade:"Itapeva",              estado:"SP",tipo:"Urbano",vm:1537000,    vf:1537000,    area:null,    unidade:null,lat:-23.9822,lng:-48.8757,statusVenda:"Proposta em Negociação",obs:"Proposta em negociação - tabela de GI",tabelaGI:2500000,  proposta:2200000,  comprador:"Investidor local e comodatário",previsaoRegistro:"06/03/2026"},
-  {mat:"2053",  tipologia:"Galpão Industrial",   cidade:"Curitibanos",          estado:"SC",tipo:"Urbano",vm:1411200,    vf:1411200,    area:10000,   unidade:"m²",lat:-27.2825,lng:-50.5783,statusVenda:"Não Vendido",   obs:"Proposta em negociação - tabela de GI",  tabelaGI:10500000,  proposta:4000000,  previsaoRegistro:"AGUARDANDO DEFINIÇÃO QUANTO AO PAGAMENTO DAS DÍVIDAS DA CAC"},
-  {mat:"11142", tipologia:"Terreno",             cidade:"Piedade",              estado:"SP",tipo:"Urbano",vm:1517475,    vf:1138106,    area:1048,    unidade:"m²",lat:-23.9319,lng:-47.4467,statusVenda:"Não Vendido",   obs:"-",                                          tabelaGI:"NÃO LIBERADO",proposta:null,  previsaoRegistro:"19/06/2026"},
-  {mat:"4379",  tipologia:"Galpão",              cidade:"Santo Anastácio",      estado:"SP",tipo:"Urbano",vm:1013342,    vf:709340,     area:3371.4,  unidade:"m²",lat:-21.9758,lng:-51.6564,statusVenda:"Não Vendido",   obs:"-",                                          tabelaGI:1600000,   proposta:null},
-  {mat:"579",   tipologia:"Galpão",              cidade:"Estrela do Sul",       estado:"MG",tipo:"Rural", vm:527500,     vf:456947,     area:5.1,     unidade:"ha",lat:-18.7378,lng:-47.6903,statusVenda:"Vendido",        obs:"Vendido",                                tabelaGI:null,      proposta:900000,   comprador:"Eucamed"},
-  {mat:"1453",  tipologia:"Galpão",              cidade:"São Joaquim",          estado:"SC",tipo:"Urbano",vm:2558432,    vf:430072,     area:null,    unidade:"ha",lat:-28.2943,lng:-49.9308,statusVenda:"Proposta em Negociação",obs:"Proposta em negociação - tabela de GI",tabelaGI:12000000, proposta:8000000,  comprador:"Cooperativa INTEGRADA"},
-  {mat:"2629",  tipologia:"Terreno",             cidade:"Assaí",                estado:"PR",tipo:"Urbano",vm:548855,     vf:411641,     area:3717,    unidade:"m²",lat:-23.3794,lng:-50.8631,statusVenda:"Não Vendido",   obs:"-",                                          tabelaGI:"NÃO LIBERADO",proposta:null,  previsaoRegistro:"26/04/2026"},
-  {mat:"3495",  tipologia:"Fazenda",             cidade:"Tiros",                estado:"MG",tipo:"Rural", vm:332540,     vf:332540,     area:687.75,  unidade:"ha",lat:-18.9800,lng:-45.9667,statusVenda:"Não Vendido",   obs:"Sem proposta",                           tabelaGI:null,      proposta:null,     previsaoRegistro:"26/03/2026"},
-  {mat:"7632",  tipologia:"Gleba",               cidade:"Assaí",                estado:"PR",tipo:"Urbano",vm:316814,     vf:316814,     area:115610,  unidade:"m²",lat:-23.3894,lng:-50.8731,statusVenda:"Não Vendido",   obs:"-",                                          tabelaGI:"NÃO LIBERADO",proposta:null,  previsaoRegistro:"25/05/2026"},
-  {mat:"8701",  tipologia:"Gleba",               cidade:"Guaíra",               estado:"PR",tipo:"Rural", vm:391730,     vf:314585,     area:55.66,   unidade:"ha",lat:-24.0769,lng:-54.2561,statusVenda:"Não Vendido",   obs:"Aguardando formalização",                tabelaGI:null,      proposta:350000,   previsaoRegistro:"19/03/2026"},
-  {mat:"3222",  tipologia:"Chácara Urbana",      cidade:"Assaí",                estado:"PR",tipo:"Urbano",vm:404291,     vf:303218,     area:7006,    unidade:"ha",lat:-23.3594,lng:-50.8431,statusVenda:"Não Vendido",   obs:"Proposta em negociação - tabela de GI",  tabelaGI:1980000,   proposta:1500000,  previsaoRegistro:"26/04/2026"},
-  {mat:"7047",  tipologia:"Casa Residencial",    cidade:"Tatuí",                estado:"SP",tipo:"Urbano",vm:283290,     vf:198303,     area:250,     unidade:"m²",lat:-23.3561,lng:-47.8575,statusVenda:"Não Vendido",   obs:"-",                                          tabelaGI:"NÃO LIBERADO",proposta:null},
-  {mat:"51",    tipologia:"Chácara Urbana",      cidade:"São Roque",            estado:"SP",tipo:"Urbano",vm:164136,     vf:164136,     area:580800,  unidade:"m²",lat:-23.5295,lng:-47.1371,statusVenda:"Não Vendido",   obs:"-",                                          tabelaGI:"NÃO LIBERADO",proposta:null,  previsaoRegistro:"26/06/2026"},
-  {mat:"147628",tipologia:"Apartamento",         cidade:"Rio de Janeiro",        estado:"RJ",tipo:"Urbano",vm:173345,    vf:86673,      area:null,    unidade:"m²",lat:-22.9068,lng:-43.1729,statusVenda:"Não Vendido",   obs:"-",                                          tabelaGI:"NÃO LIBERADO",proposta:null,  previsaoRegistro:"13/04/2026"},
-  {mat:"11444", tipologia:"Prédio Comercial",    cidade:"Guarapuava",           estado:"PR",tipo:"Urbano",vm:86187,      vf:86187,      area:698.75,  unidade:"m²",lat:-25.3896,lng:-51.4625,statusVenda:"Não Vendido",   obs:"-",                                          tabelaGI:"NÃO LIBERADO",proposta:null,  previsaoRegistro:"19/03/2026"},
-  {mat:"15927", tipologia:"Chácara Urbana",      cidade:"São Roque",            estado:"SP",tipo:"Urbano",vm:0,          vf:0,          area:12000,   unidade:"m²",lat:-23.5395,lng:-47.1471,statusVenda:"Não Vendido",   obs:"-",                                          tabelaGI:null,      proposta:null,     previsaoRegistro:"26/06/2026"},
-  {mat:"Posse", tipologia:"—",                  cidade:"—",                    estado:"SP",tipo:"Urbano",vm:0,          vf:0,          area:null,    unidade:null,lat:null,    lng:null,   statusVenda:"Não Vendido",   obs:"-",                                          tabelaGI:null,      proposta:null},
-  {mat:"Equipamentos",tipologia:"—",            cidade:"—",                    estado:"GO",tipo:"Rural", vm:0,          vf:3900000,    area:null,    unidade:null,lat:-16.6869,lng:-49.2648,statusVenda:"Não Vendido",   obs:"Negociação em andamento",               tabelaGI:2500000,   proposta:2200000,  comprador:"Investidor local e comodatário",previsaoRegistro:"06/03/2026"},
-];
+let activeTab = 'cotia';
+
+let PROPERTIES_COTIA = [];
+let PROPERTIES_COZAC = [];
 
 // ── DADOS DE VENDA (fallback para planilhas sem coluna Proposta) ──────
 const SALES = {};
 
-// ── FLUXO DE RECEBIMENTO ─────────────────────────────────────────────
-// Editável: cada entrada representa uma linha do fluxo (sinal + parcelas)
-// totalVenda: valor total da venda | recebido: valor já recebido
-// parcelas: [ { label, data, principal, juros } ]
-let FLUXO = {
+// ── FLUXO DE RECEBIMENTO — COTIA ─────────────────────────────────────
+let FLUXO_COTIA = {
   totalRecebido: 21800000,
   totalRemanescente: 38464568.16,
   linhas: [
     { mat: '6.896',                   recebido: 5400000,  remanescente: 12600000,   dataBaixa: '05/11/2025', criterio: '30% à vista e restante pago na data da escritura sem correção',        comprador: 'MC Incorporações',                 valorVenda: 18000000 },
     { mat: '579',                     recebido: 900000,   remanescente: null,        dataBaixa: '30/10/2025 e 31/10/2025', criterio: '',                                                                    comprador: 'Eucamed',                          valorVenda: 900000   },
-    { mat: '6193',                    recebido: null,     remanescente: null,        pendente: true,  ordem: 1,            criterio: '',                                                                    comprador: 'Cooperativa INTEGRADA',            valorVenda: null     },
-    { mat: '5377',                    recebido: null,     remanescente: null,        pendente: true,  ordem: 2,            criterio: '',                                                                    comprador: 'Cooperativa INTEGRADA',            valorVenda: null     },
-    { mat: '9846',                    recebido: null,     remanescente: null,        pendente: true,  ordem: 3,            criterio: '',                                                                    comprador: 'Cooperativa INTEGRADA',            valorVenda: null     },
+    { mat: '6193',                    recebido: null,     remanescente: null,                                             criterio: '',                                                                    comprador: 'Cooperativa INTEGRADA',            valorVenda: null     },
+    { mat: '5377',                    recebido: null,     remanescente: null,        dataBaixa: '02/10/2026',             criterio: '',                                                                    comprador: 'Cooperativa INTEGRADA',            valorVenda: null     },
+    { mat: '9846',                    recebido: null,     remanescente: null,        dataBaixa: '02/10/2026',             criterio: '',                                                                    comprador: 'Cooperativa INTEGRADA',            valorVenda: null     },
     { mat: '23697',                   recebido: 10400000, remanescente: 20964568.16, dataBaixa: '02/01/2016', ordem: 4,   criterio: '+ 3 parcelas anuais de R$ 5.200.000,00 corrigidas a CDI + 1,5% a.a', comprador: 'Cooperativa INTEGRADA',            valorVenda: 26000000 },
     { mat: '1615',                    recebido: 2100000,  remanescente: 4900000,     dataBaixa: '13/03/2026',              criterio: '30% à vista e restante pago na data da escritura sem correção',       comprador: 'Cooperativa Agricola de Canoinhas',valorVenda: 7000000  },
     { mat: '1.756, 1.757, 1.758 E 1.759', recebido: 3000000, remanescente: null,    dataBaixa: '12/01/2026',              criterio: 'Indenização relacionada a depreciação de imóvel adjudicado',          comprador: '—',                                valorVenda: 3000000  },
   ]
 };
+
+// ── FLUXO DE RECEBIMENTO — COZAC ─────────────────────────────────────
+let FLUXO_COZAC = {
+  totalRecebido: 0,
+  totalRemanescente: 0,
+  linhas: [],
+};
+
+// ── PROPOSTAS ─────────────────────────────────────────────────────────
+let PROPOSTAS_COTIA = [];
+let PROPOSTAS_COZAC = [];
+
+// ── REFERÊNCIAS ATIVAS (mudam ao trocar de aba) ───────────────────────
+let PROPERTIES = PROPERTIES_COTIA;
+let FLUXO = FLUXO_COTIA;
+let PROPOSTAS = PROPOSTAS_COTIA;
 
 // ── HELPERS ───────────────────────────────────────────────────────────
 const fmt = (v) => {
@@ -1150,15 +1399,105 @@ const fmtArea = (v, u) => {
 };
 // Lat/Lng preservados do dado inicial para usar ao importar planilha (que não tem coordenadas)
 const LAT_LNG_BY_MAT = {};
-PROPERTIES.forEach(p => { if (p.lat && p.lng) LAT_LNG_BY_MAT[String(p.mat)] = { lat: p.lat, lng: p.lng }; });
+
+// Coordenadas aproximadas das cidades presentes na carteira
+const CITY_COORDS = {
+  'Assaí/PR':                    { lat: -23.3742, lng: -50.8647 },
+  'Assis Chateaubriand/PR':      { lat: -24.4106, lng: -53.5201 },
+  'Bragança Paulista/SP':        { lat: -22.9522, lng: -46.5418 },
+  'Canoinhas/SC':                { lat: -26.1783, lng: -50.3894 },
+  'Chapadão Do Céu/GO':          { lat: -18.9858, lng: -52.6253 },
+  'Curitibanos/SC':              { lat: -27.2831, lng: -50.5803 },
+  'Dourados/MS':                 { lat: -22.2211, lng: -54.8057 },
+  'Estrela do Sul/MG':           { lat: -18.7339, lng: -47.6903 },
+  'Floraí/PR':                   { lat: -23.3264, lng: -52.2714 },
+  'Floresta/PR':                 { lat: -23.5997, lng: -52.0808 },
+  'Fátima do Sul/MS':            { lat: -22.5139, lng: -54.5494 },
+  'Guaira/PR':                   { lat: -24.0786, lng: -54.2569 },
+  'Guarapuava/PR':               { lat: -25.3945, lng: -51.4628 },
+  'Ilha Comprida/SP':            { lat: -24.7147, lng: -47.5295 },
+  'Indaiatuba/SP':               { lat: -23.0897, lng: -47.2172 },
+  'Itaberá/SP':                  { lat: -23.8664, lng: -49.1408 },
+  'Jacareí/SP':                  { lat: -23.3053, lng: -45.9661 },
+  'Londrina/PR':                 { lat: -23.3045, lng: -51.1696 },
+  'Maringá/PR':                  { lat: -23.4205, lng: -51.9333 },
+  'Mauá da Serra/PR':            { lat: -23.9639, lng: -51.1731 },
+  'Piedade/SP':                  { lat: -23.7128, lng: -47.4231 },
+  'Rancho Alegre/PR':            { lat: -23.2667, lng: -51.0000 },
+  'Ribeirão Preto/SP':           { lat: -21.1704, lng: -47.8103 },
+  'Rio de Janeiro/RJ':           { lat: -22.9068, lng: -43.1729 },
+  'Santo Anastácio/SP':          { lat: -21.9758, lng: -51.6528 },
+  'Santos/SP':                   { lat: -23.9608, lng: -46.3336 },
+  'São Joaquim/SC':              { lat: -28.2947, lng: -49.9317 },
+  'São Paulo/SP':                { lat: -23.5558, lng: -46.6396 },
+  'São Roque/SP':                { lat: -23.5283, lng: -47.1319 },
+  'Taciba/SP':                   { lat: -22.3753, lng: -51.2889 },
+  'Tatuí/SP':                    { lat: -23.3567, lng: -47.8572 },
+  'Tiros/MG':                    { lat: -18.9839, lng: -45.9706 },
+  'Vargem Grande Paulista/SP':   { lat: -23.5992, lng: -47.0281 },
+};
+
+// ── TAB SWITCH ────────────────────────────────────────────────────────
+function switchTab(tab) {
+  activeTab = tab;
+  PROPERTIES = tab === 'cotia' ? PROPERTIES_COTIA : PROPERTIES_COZAC;
+  FLUXO      = tab === 'cotia' ? FLUXO_COTIA      : FLUXO_COZAC;
+  PROPOSTAS  = tab === 'cotia' ? PROPOSTAS_COTIA   : PROPOSTAS_COZAC;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab' + tab[0].toUpperCase() + tab.slice(1)).classList.add('active');
+  const btn = document.getElementById('importBtn');
+  if (btn) btn.textContent = '📂 Importar ' + (tab === 'cotia' ? 'Cotia' : 'Cozac');
+  renderAll();
+}
+
+function updateTabBadges() {
+  const bc = document.getElementById('tabBadgeCotia');
+  const bz = document.getElementById('tabBadgeCozac');
+  if (bc) bc.textContent = PROPERTIES_COTIA.length || '—';
+  if (bz) bz.textContent = PROPERTIES_COZAC.length || '—';
+}
+
+// ── AUTO-LOAD DOS ARQUIVOS XLSX ────────────────────────────────────────
+async function autoLoadFiles() {
+  const loadFile = async (filename, tab) => {
+    const tryPath = async (path) => {
+      try {
+        const r = await fetch(path);
+        if (!r.ok) return null;
+        const buf = await r.arrayBuffer();
+        const wb = XLSX.read(new Uint8Array(buf), { type: 'array', cellDates: true });
+        return parseExcelToProperties(wb, tab);
+      } catch (e) { return null; }
+    };
+    // Tenta caminho encodado e literal
+    return (await tryPath('./' + encodeURIComponent(filename)))
+        || (await tryPath('./' + filename))
+        || [];
+  };
+
+  try {
+    [PROPERTIES_COTIA, PROPERTIES_COZAC] = await Promise.all([
+      loadFile('dados_cotia.xlsx', 'cotia'),
+      loadFile('dados cozac.xlsx', 'cozac'),
+    ]);
+  } catch (e) { /* silent */ }
+
+  PROPERTIES_COTIA.forEach(p => { if (p.lat && p.lng) LAT_LNG_BY_MAT[String(p.mat)] = { lat: p.lat, lng: p.lng }; });
+  PROPERTIES = PROPERTIES_COTIA;
+  updateTabBadges();
+  renderAll();
+}
 
 // ── KPIs ──────────────────────────────────────────────────────────────
-let totalVM, totalVF, loc, partLoc, nLoc, rural, urbano, total;
+let totalVM, totalVF, totalPropostas, loc, partLoc, nLoc, rural, urbano, total;
 let vendidos, naoVendidos, qtdVendidos, totalVendido, totalRecebido, vmNaoVendido, vfNaoVendido, totalTabelaGI, saldoVF;
 
 function computeKPIs() {
-  totalVM = PROPERTIES.reduce((a,b) => a + (b.vm||0), 0);
-  totalVF = PROPERTIES.reduce((a,b) => a + (b.vf||0), 0);
+  totalVM       = PROPERTIES.reduce((a,b) => a + (b.vm||0), 0);
+  totalVF       = PROPERTIES.reduce((a,b) => a + (b.vf||0), 0);
+  totalPropostas = PROPERTIES
+    .filter(p => p.proposta > 0 && /negoci/i.test(p.statusVenda || ''))
+    .reduce((a, b) => a + b.proposta, 0);
   loc     = PROPERTIES.filter(p => p.localizacao === 'Localizado').length;
   partLoc = PROPERTIES.filter(p => p.localizacao === 'Parcialmente Localizado').length;
   nLoc    = PROPERTIES.filter(p => p.localizacao === 'Não Localizado').length;
@@ -1175,15 +1514,15 @@ function computeKPIs() {
   naoVendidos = PROPERTIES.filter(p => !_isVendido(p));
   qtdVendidos = vendidos.length;
 
-  // Valor vendido = soma da coluna Proposta dos vendidos; fallback Tabela GI → SALES
+  // Valor vendido = valor_venda_total → proposta → tabela GI → SALES
   totalVendido = vendidos.reduce((a, b) => {
-    const val = b.proposta ?? parseNum(b.tabelaGI) ?? SALES[b.mat]?.valorVenda ?? 0;
+    const val = b.valorVendaTotal ?? b.proposta ?? parseNum(b.tabelaGI) ?? SALES[b.mat]?.valorVenda ?? 0;
     return a + val;
   }, 0);
 
-  // Já recebido = mesma base (Proposta confirmada); fallback Tabela GI → SALES
+  // Já recebido = mesma base
   totalRecebido = vendidos.reduce((a, b) => {
-    const val = b.proposta ?? parseNum(b.tabelaGI) ?? SALES[b.mat]?.valorRecebido ?? 0;
+    const val = b.valorVendaTotal ?? b.proposta ?? parseNum(b.tabelaGI) ?? SALES[b.mat]?.valorRecebido ?? 0;
     return a + val;
   }, 0);
 
@@ -1219,8 +1558,8 @@ function renderKPIs() {
   animCount(document.getElementById('kpiVM'), totalVM/1e6, 'R$ ', 1);
   setTimeout(() => document.getElementById('kpiVM').textContent = 'R$ ' + (totalVM/1e6).toFixed(1) + 'M', 1250);
 
-  animCount(document.getElementById('kpiVF'), totalVF/1e6, 'R$ ', 1);
-  setTimeout(() => document.getElementById('kpiVF').textContent = 'R$ ' + (totalVF/1e6).toFixed(1) + 'M', 1250);
+  animCount(document.getElementById('kpiPropostas'), totalPropostas/1e6, 'R$ ', 1);
+  setTimeout(() => document.getElementById('kpiPropostas').textContent = 'R$ ' + (totalPropostas/1e6).toFixed(1) + 'M', 1250);
 
   const vendPct = total > 0 ? Math.round(qtdVendidos / total * 100) : 0;
   document.getElementById('kpiVendidosPct').textContent = vendPct + '%';
@@ -1255,6 +1594,7 @@ function reorderDashboardSections() {
 }
 
 function renderAll() {
+  updateTabBadges();
   computeKPIs();
   renderKPIs();
   document.getElementById('mapCount').textContent = PROPERTIES.filter(p=>p.lat).length + ' marcadores';
@@ -1310,7 +1650,15 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('cardRecebido').addEventListener('click', openModalFluxo);
   document.getElementById('fileInput').addEventListener('change', handleFileImport);
 
-  renderAll();
+  // Atualiza label do botão de importar conforme a aba ativa
+  function syncImportBtnLabel() {
+    const btn = document.getElementById('importBtn');
+    if (btn) btn.textContent = '📂 Importar ' + (activeTab === 'cotia' ? 'Cotia' : 'Cozac');
+  }
+  syncImportBtnLabel();
+
+  // Carrega os dois arquivos XLSX automaticamente
+  autoLoadFiles();
 });
 
 // ── MAP ───────────────────────────────────────────────────────────────
@@ -1541,12 +1889,10 @@ function renderValueBars() {
   `).join('');
 }
 
+// ── SALES TABLE ───────────────────────────────────────────────────────
 // ── SALES TABLES ──────────────────────────────────────────────────────
 function renderSalesTable() {
-  // Normaliza mat para matching (remove pontos usados como separador de milhar)
   const normMat = (s) => String(s).trim().replace(/\./g, '');
-
-  // Mapeia mat normalizado → linha do FLUXO
   const fluxoMap = {};
   FLUXO.linhas.forEach(l => {
     l.mat.split(/,|\s+[Ee]\s+/).forEach(m => {
@@ -1562,23 +1908,18 @@ function renderSalesTable() {
     return sv === 'proposta em negociação' || sv === 'proposta em fase de minuta';
   };
 
-  // Célula numérica helper
   const numCell = (v, color) => {
     const f = fmt(v);
     if (f === '—') return '<span style="color:var(--text-muted)">—</span>';
-    return color
-      ? `<span class="num-val" style="color:${color}">${f}</span>`
-      : `<span class="num-val">${f}</span>`;
+    return color ? `<span class="num-val" style="color:${color}">${f}</span>` : `<span class="num-val">${f}</span>`;
   };
 
   const countLabel = (n) => `${n} imóve${n === 1 ? 'l' : 'is'}`;
 
-  // 1. Imóveis Quitados: vendido + sem remanescente
   const quitados = PROPERTIES
-    .filter(p => isVendido(p) && !(getFluxo(p.mat)?.remanescente > 0))
+    .filter(p => { if (!isVendido(p)) return false; const fl = getFluxo(p.mat); return !fl || !(fl.remanescente > 0 || fl.pendente); })
     .sort((a, b) => (b.vm || 0) - (a.vm || 0));
 
-  // 2. Imóveis com fluxo pendente: vendido + remanescente > 0 OU marcado como pendente
   const pendentes = PROPERTIES
     .filter(p => { if (!isVendido(p)) return false; const fl = getFluxo(p.mat); return fl && (fl.remanescente > 0 || fl.pendente); })
     .sort((a, b) => {
@@ -1587,12 +1928,10 @@ function renderSalesTable() {
       return oa !== ob ? oa - ob : (a.vm || 0) - (b.vm || 0);
     });
 
-  // 3. Imóveis com proposta: em negociação ou em fase de minuta
   const propostas = PROPERTIES
     .filter(isProposta)
     .sort((a, b) => (b.proposta || 0) - (a.proposta || 0));
 
-  // ── Render: Quitados ──
   document.getElementById('countQuitados').textContent = countLabel(quitados.length);
   document.getElementById('quitadosTableBody').innerHTML = quitados.length
     ? quitados.map(p => {
@@ -1610,16 +1949,13 @@ function renderSalesTable() {
       }).join('')
     : `<tr><td colspan="8" class="sg-empty">Nenhum imóvel quitado encontrado.</td></tr>`;
 
-  // ── Render: Fluxo Pendente ──
   document.getElementById('countPendentes').textContent = countLabel(pendentes.length);
-  // Total remanescente sem duplicar linhas de FLUXO
   const seenFluxo = new Set();
   let totalRem = 0;
   pendentes.forEach(p => {
     const fl = getFluxo(p.mat);
     if (fl && !seenFluxo.has(fl)) { totalRem += fl.remanescente || 0; seenFluxo.add(fl); }
   });
-
   document.getElementById('pendentesTableBody').innerHTML = pendentes.length
     ? pendentes.map(p => {
         const fl = getFluxo(p.mat);
@@ -1642,13 +1978,11 @@ function renderSalesTable() {
       </tr>`
     : `<tr><td colspan="9" class="sg-empty">Nenhum imóvel com fluxo pendente.</td></tr>`;
 
-  // ── Render: Propostas ──
   const statusChipProposta = (sv) => {
     if ((sv || '').toLowerCase().includes('minuta'))
       return '<span class="chip chip-amber" style="font-size:10px">Fase de Minuta</span>';
     return '<span class="chip" style="background:rgba(59,130,246,.15);color:#60a5fa;font-size:10px">Em Negociação</span>';
   };
-
   document.getElementById('countPropostas').textContent = countLabel(propostas.length);
   document.getElementById('propostasTableBody').innerHTML = propostas.length
     ? propostas.map(p => `<tr>
@@ -1851,39 +2185,103 @@ function parseNum(v) {
   return isNaN(n) ? null : n;
 }
 
-function parseExcelToProperties(workbook) {
-  const sheetName = workbook.SheetNames[0];
+function parseExcelToProperties(workbook, tab) {
+  tab = tab || 'cotia';
+
+  // Ambos os arquivos agora têm a mesma estrutura com colunas snake_case.
+  // Para Cozac, prefere a aba "Imoveis"; fallback para a primeira aba.
+  const sheetName = tab === 'cozac'
+    ? (workbook.SheetNames.find(n => /imoveis|imóveis/i.test(n)) || workbook.SheetNames[0])
+    : workbook.SheetNames[0];
+
   const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: null });
 
   return rows.map(row => {
-    const mat = String(colVal(row,
-      'mat.', 'mat', 'matrícula', 'matricula', 'codigo', 'código', 'id') ?? '—').trim();
+    const mat    = String(colVal(row, 'mat_tipo', 'mat.', 'mat', 'matrícula', 'matricula', 'codigo', 'código') ?? '—').trim();
+    const cidade = String(colVal(row, 'cidade', 'municipio', 'município') ?? '—');
+    const estado = String(colVal(row, 'estado', 'uf') ?? '—');
 
-    const coords = LAT_LNG_BY_MAT[mat] || {};
+    const coords     = LAT_LNG_BY_MAT[mat] || {};
+    const cityCoords = CITY_COORDS[`${cidade}/${estado}`] || {};
 
     return {
       mat,
-      tipologia:   String(colVal(row, 'tipologia', 'tipo do imóvel', 'tipo do imovel', 'tipo imovel') ?? '—'),
-      cidade:      String(colVal(row, 'cidade', 'municipio', 'município') ?? '—'),
-      estado:      String(colVal(row, 'estado', 'uf') ?? '—'),
-      tipo:        String(colVal(row, 'tipo', 'classificação', 'classificacao') ?? 'Urbano'),
-      vm:          parseNum(colVal(row, 'vm enforce', 'vm', 'valor avaliação', 'valor avaliacao', 'valor de mercado')) ?? 0,
-      vf:          parseNum(colVal(row, 'vf enforce', 'vf', 'valor venda forçada', 'valor venda forcada')) ?? 0,
-      area:        parseNum(colVal(row, 'área terreno', 'area terreno', 'área', 'area')),
-      unidade:     colVal(row, 'unid. área terreno', 'unid. area terreno', 'unidade', 'un', 'und'),
+      tipologia:   String(colVal(row, 'tipologia', 'tipo do imóvel', 'tipo do imovel') ?? '—'),
+      cidade,
+      estado,
+      tipo:        String(colVal(row, 'tipo_imovel', 'tipo', 'classificação', 'classificacao') ?? 'Urbano'),
+      vm:          parseNum(colVal(row, 'vm_enforce', 'vm enforce', 'vm', 'valor_avaliacao', 'valor avaliação', 'valor avaliacao', 'valor de mercado')) ?? 0,
+      vf:          parseNum(colVal(row, 'vf_enforce', 'vf enforce', 'vf', 'valor_venda_forcada', 'valor venda forçada', 'valor venda forcada')) ?? 0,
+      area:        parseNum(colVal(row, 'area_terreno', 'área terreno', 'area terreno', 'área', 'area')),
+      unidade:     colVal(row, 'unid_area_terreno', 'unid. área terreno', 'unid. area terreno', 'unidade', 'un', 'und'),
       nivel:       colVal(row, 'nível', 'nivel', 'level'),
-      localizacao: colVal(row, 'resultado de localização', 'resultado de localizacao', 'localização', 'localizacao'),
-      status:      colVal(row, 'status (tarefa atual)'),
+      localizacao: colVal(row, 'resultado_localizacao', 'resultado de localização', 'resultado de localizacao', 'localização', 'localizacao'),
+      status:      colVal(row, 'status_tarefa', 'status (tarefa atual)'),
       statusVenda: colVal(row, 'status'),
       obs:         colVal(row, 'obs'),
-      tabelaGI:    colVal(row, 'tabela gi', 'tabelagi', 'tabela_gi', 'gi'),
+      tabelaGI:    colVal(row, 'tabela_gi', 'tabela gi', 'tabelagi', 'gi'),
       proposta:         parseNum(colVal(row, 'proposta', 'valor proposta', 'proposta valor')),
       comprador:        colVal(row, 'comprador') || null,
-      previsaoRegistro: fmtDate(colVal(row, 'previsão de registro', 'previsao de registro', 'previsão registro', 'previsao registro')),
-      lat:         parseNum(colVal(row, 'lat', 'latitude'))  ?? coords.lat ?? null,
-      lng:         parseNum(colVal(row, 'lng', 'long', 'longitude')) ?? coords.lng ?? null,
+      previsaoRegistro: fmtDate(colVal(row, 'previsao_registro', 'previsão de registro', 'previsao de registro', 'previsão registro', 'previsao registro')),
+      dataVenda:        fmtDate(colVal(row, 'data_venda', 'data venda')),
+      valorVendaTotal:  parseNum(colVal(row, 'valor_venda_total', 'valor venda total')),
+      fluxoVenda:       colVal(row, 'fluxo_venda', 'fluxo venda') || null,
+      pendenciaVenda:   colVal(row, 'pendencia_venda', 'pendencia venda') || null,
+      quemPendenciaVenda: colVal(row, 'quem_pendencia_venda', 'quem pendencia venda') || null,
+      lat:         parseNum(colVal(row, 'lat', 'latitude'))  ?? coords.lat ?? cityCoords.lat ?? null,
+      lng:         parseNum(colVal(row, 'lng', 'long', 'longitude')) ?? coords.lng ?? cityCoords.lng ?? null,
     };
   }).filter(p => p.mat && p.mat !== '—' && p.mat !== 'null');
+}
+
+function parseCozacRow(row) {
+  const mat = String(colVal(row, 'mat.', 'mat', 'matrícula', 'matricula') ?? '—').trim();
+
+  // Cidade pode vir no formato "Ribeirão Preto/SP"
+  const cidadeRaw = String(colVal(row, 'cidade') ?? '').trim();
+  let cidade = cidadeRaw, estado = 'SP';
+  if (cidadeRaw.includes('/')) {
+    const idx = cidadeRaw.lastIndexOf('/');
+    cidade = cidadeRaw.slice(0, idx).trim();
+    estado = cidadeRaw.slice(idx + 1).trim();
+  }
+
+  // Status de venda — mapeia "Status atual" + "Tem proposta?"
+  const statusAtual  = String(colVal(row, 'status atual') ?? '').trim().toLowerCase();
+  const temProposta  = String(colVal(row, 'tem proposta?') ?? '').trim().toLowerCase();
+  let statusVenda;
+  if (statusAtual === 'vendido') {
+    statusVenda = 'Vendido';
+  } else if (statusAtual === 'aprovado - em escritura') {
+    statusVenda = 'Proposta em Fase de Minuta';
+  } else if (temProposta === 'ok' || temProposta === 'sim') {
+    statusVenda = 'Proposta em Negociação';
+  } else {
+    statusVenda = 'Não Vendido';
+  }
+
+  return {
+    mat,
+    tipologia:        String(colVal(row, 'tipologia') ?? '—'),
+    cidade,
+    estado,
+    tipo:             String(colVal(row, 'tipo') ?? 'Urbano'),
+    vm:               parseNum(colVal(row, 'vm liq', 'valor avaliação', 'valor avaliacao')) ?? 0,
+    vf:               parseNum(colVal(row, 'vf liq.', 'vf liq', 'valor venda forçada', 'valor venda forcada', 'vf')) ?? 0,
+    area:             null,
+    unidade:          null,
+    nivel:            null,
+    localizacao:      null,
+    status:           null,
+    statusVenda,
+    obs:              colVal(row, 'obs') || null,
+    tabelaGI:         colVal(row, 'tabela gi', 'tabelagi') || null,
+    proposta:         parseNum(colVal(row, 'melhor proposta (ativa)', 'valor recebido / proposta', 'proposta')),
+    comprador:        colVal(row, 'comprador') || null,
+    previsaoRegistro: fmtDate(colVal(row, 'data registro', 'previsão de registro')) || null,
+    lat:              null,
+    lng:              null,
+  };
 }
 
 function showToast(msg, isError = false) {
@@ -1898,6 +2296,7 @@ function handleFileImport(e) {
   const file = e.target.files[0];
   if (!file) return;
   const btn = document.getElementById('importBtn');
+  const tabLabel = activeTab === 'cotia' ? 'Cotia' : 'Cozac';
   btn.textContent = '⏳ Carregando...';
   btn.classList.remove('success');
 
@@ -1905,17 +2304,26 @@ function handleFileImport(e) {
   reader.onload = (evt) => {
     try {
       const data = new Uint8Array(evt.target.result);
-      const wb = XLSX.read(data, { type: 'array' });
-      const parsed = parseExcelToProperties(wb);
+      const wb = XLSX.read(data, { type: 'array', cellDates: true });
+      const parsed = parseExcelToProperties(wb, activeTab);
       if (!parsed.length) throw new Error('Nenhum dado encontrado na planilha.');
-      PROPERTIES = parsed;
+      if (activeTab === 'cotia') {
+        PROPERTIES_COTIA = parsed;
+        PROPERTIES = PROPERTIES_COTIA;
+      } else {
+        PROPERTIES_COZAC = parsed;
+        PROPERTIES = PROPERTIES_COZAC;
+      }
       renderAll();
       btn.textContent = '✅ ' + file.name.slice(0, 22) + (file.name.length > 22 ? '…' : '');
       btn.classList.add('success');
-      showToast('✅ ' + parsed.length + ' imóveis carregados de ' + file.name);
-      setTimeout(() => { btn.textContent = '📂 Importar Planilha'; btn.classList.remove('success'); }, 5000);
+      showToast('✅ ' + parsed.length + ' imóveis carregados (' + tabLabel + ')');
+      setTimeout(() => {
+        btn.textContent = '📂 Importar ' + tabLabel;
+        btn.classList.remove('success');
+      }, 5000);
     } catch (err) {
-      btn.textContent = '📂 Importar Planilha';
+      btn.textContent = '📂 Importar ' + tabLabel;
       showToast('❌ Erro ao ler a planilha: ' + err.message, true);
     }
     e.target.value = '';
@@ -2019,11 +2427,240 @@ function openModalFluxo() {
 
 // Fechar modal ao clicar fora
 document.addEventListener('click', (e) => {
-  ['modalVendidos','modalFluxo'].forEach(id => {
+  ['modalVendidos','modalFluxo','modalProposta','modalVenda'].forEach(id => {
     const el = document.getElementById(id);
     if (e.target === el) el.classList.remove('open');
   });
 });
+
+function renderPropostasTable() {
+  const tbody = document.getElementById('propostasWorkflowBody');
+  if (!PROPOSTAS.length) {
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:24px">Nenhuma proposta cadastrada.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = PROPOSTAS.map(p => {
+    const tipo = p.tipo === 'Rural'
+      ? '<span class="chip chip-green" style="font-size:10px">Rural</span>'
+      : p.tipo === 'Urbano'
+        ? '<span class="chip chip-blue" style="font-size:10px">Urbano</span>'
+        : `<span style="color:var(--text-muted)">—</span>`;
+    const valorFmt = p.valor_venda ? fmt(p.valor_venda) : '—';
+    return `<tr>
+      <td><span style="font-weight:600;color:var(--text)">${p.matricula || '—'}</span></td>
+      <td style="font-size:11px;color:var(--text-soft)">${p.tipologia || '—'}</td>
+      <td style="font-size:11px"><span style="color:var(--text)">${p.cidade || '—'}</span>${p.estado ? `<br><span style="font-size:10px;color:var(--text-muted)">${p.estado}</span>` : ''}</td>
+      <td>${tipo}</td>
+      <td style="text-align:right"><span class="num-val" style="color:var(--green)">${valorFmt}</span></td>
+      <td style="font-size:11px;color:var(--text-soft)">${p.fluxo || '—'}</td>
+      <td style="font-size:11px;color:var(--text-soft)">${p.quem_fez || '—'}</td>
+      <td style="font-size:11px;color:var(--text-soft)">${p.pendencia || '—'}</td>
+      <td style="font-size:11px;color:var(--text-soft)">${p.quem_pendencia || '—'}</td>
+      <td style="font-size:11px;color:var(--text-muted)">${p.obs || '—'}</td>
+      <td><button class="proposta-edit-btn" onclick="abrirModalEditarProposta(${p.id})">Editar</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function carregarPropostas() {
+  fetch('/api/propostas')
+    .then(r => r.json())
+    .then(data => {
+      if (activeTab === 'cotia') {
+        PROPOSTAS_COTIA = data;
+        PROPOSTAS = PROPOSTAS_COTIA;
+      } else {
+        PROPOSTAS_COZAC = data;
+        PROPOSTAS = PROPOSTAS_COZAC;
+      }
+      renderPropostasTable();
+    })
+    .catch(() => {});
+}
+
+function abrirModalCadastrarProposta() {
+  document.getElementById('propostaId').value = '';
+  document.getElementById('propMatricula').value = '';
+  document.getElementById('propValorVenda').value = '';
+  document.getElementById('propFluxo').value = '';
+  document.getElementById('propQuemFez').value = '';
+  document.getElementById('propPendencia').value = '';
+  document.getElementById('propQuemPendencia').value = '';
+  document.getElementById('propObs').value = '';
+  document.getElementById('propMatHint').textContent = '';
+  document.getElementById('modalPropostaTitulo').textContent = '📝 Cadastrar Proposta';
+  document.getElementById('btnSalvarProposta').textContent = 'Salvar Proposta';
+  document.getElementById('modalProposta').classList.add('open');
+}
+
+function abrirModalEditarProposta(id) {
+  const p = PROPOSTAS.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('propostaId').value = p.id;
+  document.getElementById('propMatricula').value = p.matricula || '';
+  document.getElementById('propValorVenda').value = p.valor_venda || '';
+  document.getElementById('propFluxo').value = p.fluxo || '';
+  document.getElementById('propQuemFez').value = p.quem_fez || '';
+  document.getElementById('propPendencia').value = p.pendencia || '';
+  document.getElementById('propQuemPendencia').value = p.quem_pendencia || '';
+  document.getElementById('propObs').value = p.obs || '';
+  atualizarHintMatricula(p.matricula);
+  document.getElementById('modalPropostaTitulo').textContent = '✏️ Editar Proposta';
+  document.getElementById('btnSalvarProposta').textContent = 'Atualizar Proposta';
+  document.getElementById('modalProposta').classList.add('open');
+}
+
+function fecharModalProposta() {
+  document.getElementById('modalProposta').classList.remove('open');
+}
+
+function atualizarHintMatricula(mat) {
+  const hint = document.getElementById('propMatHint');
+  if (!mat) { hint.textContent = ''; return; }
+  const match = PROPERTIES.find(p => String(p.mat).trim().toLowerCase() === mat.trim().toLowerCase());
+  if (match) {
+    hint.textContent = `✓ ${match.tipologia || ''} — ${match.cidade || ''}${match.estado ? '/' + match.estado : ''}`;
+    hint.style.color = 'var(--green)';
+  } else {
+    hint.textContent = 'Matrícula não encontrada no banco de imóveis';
+    hint.style.color = 'var(--amber)';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btnCadastrarProposta').addEventListener('click', abrirModalCadastrarProposta);
+  document.getElementById('propMatricula').addEventListener('input', (e) => atualizarHintMatricula(e.target.value));
+  document.getElementById('btnCadastrarVenda').addEventListener('click', abrirModalVenda);
+  document.getElementById('vendaMatricula').addEventListener('input', (e) => atualizarHintVenda(e.target.value));
+  carregarPropostas();
+});
+
+// ── VENDA ─────────────────────────────────────────────────────────────
+function abrirModalVenda() {
+  document.getElementById('vendaMatricula').value = '';
+  document.getElementById('vendaData').value = '';
+  document.getElementById('vendaComprador').value = '';
+  document.getElementById('vendaValorTotal').value = '';
+  document.getElementById('vendaRecebido').value = '';
+  document.getElementById('vendaFluxo').value = '';
+  document.getElementById('vendaPendencia').value = '';
+  document.getElementById('vendaQuemPendencia').value = '';
+  document.getElementById('vendaObs').value = '';
+  document.getElementById('vendaMatHint').textContent = '';
+  document.getElementById('vendaMatHint').style.color = 'var(--accent)';
+  document.getElementById('btnSalvarVenda').disabled = false;
+  document.getElementById('modalVenda').classList.add('open');
+}
+
+function fecharModalVenda() {
+  document.getElementById('modalVenda').classList.remove('open');
+}
+
+function atualizarHintVenda(mat) {
+  const hint = document.getElementById('vendaMatHint');
+  const btn  = document.getElementById('btnSalvarVenda');
+  if (!mat) { hint.textContent = ''; btn.disabled = false; return; }
+
+  const match = PROPERTIES.find(p => String(p.mat).trim().toLowerCase() === mat.trim().toLowerCase());
+  if (!match) {
+    hint.textContent = 'Matrícula não encontrada no banco de imóveis';
+    hint.style.color = 'var(--amber)';
+    btn.disabled = false;
+    return;
+  }
+
+  const isVendido = (match.statusVenda || '').trim().toLowerCase() === 'vendido';
+  if (isVendido) {
+    hint.textContent = '✗ Este imóvel já está com status Vendido';
+    hint.style.color = 'var(--red)';
+    btn.disabled = true;
+  } else {
+    hint.textContent = `✓ ${match.tipologia || ''} — ${match.cidade || ''}${match.estado ? '/' + match.estado : ''}`;
+    hint.style.color = 'var(--green)';
+    btn.disabled = false;
+  }
+}
+
+function salvarVenda() {
+  const matricula = document.getElementById('vendaMatricula').value.trim();
+  if (!matricula) { alert('Matrícula é obrigatória.'); return; }
+
+  const match = PROPERTIES.find(p => String(p.mat).trim().toLowerCase() === matricula.toLowerCase());
+  if (match && (match.statusVenda || '').trim().toLowerCase() === 'vendido') {
+    alert('Este imóvel já está com status Vendido.'); return;
+  }
+
+  const dataRaw = document.getElementById('vendaData').value;
+  let dataFormatada = null;
+  if (dataRaw) {
+    const [y, m, d] = dataRaw.split('-');
+    dataFormatada = `${d}/${m}/${y}`;
+  }
+
+  const payload = {
+    matricula,
+    data_venda:           dataFormatada,
+    comprador:            document.getElementById('vendaComprador').value.trim() || null,
+    valor_venda_total:    parseFloat(document.getElementById('vendaValorTotal').value) || null,
+    recebido:             parseFloat(document.getElementById('vendaRecebido').value) || null,
+    fluxo_venda:          document.getElementById('vendaFluxo').value.trim() || null,
+    pendencia_venda:      document.getElementById('vendaPendencia').value.trim() || null,
+    quem_pendencia_venda: document.getElementById('vendaQuemPendencia').value.trim() || null,
+    obs:                  document.getElementById('vendaObs').value.trim() || null,
+  };
+
+  fetch('/api/vendas', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+    .then(r => {
+      if (!r.ok) return r.json().then(e => Promise.reject(e.error || 'Erro ao salvar'));
+      return r.json();
+    })
+    .then(() => {
+      fecharModalVenda();
+      showToast('✅ Venda registrada com sucesso');
+      renderAll();
+    })
+    .catch(err => showToast('❌ ' + err, true));
+}
+
+function salvarProposta() {
+  const id = document.getElementById('propostaId').value;
+  const matricula = document.getElementById('propMatricula').value.trim();
+  if (!matricula) { alert('Matrícula é obrigatória.'); return; }
+
+  const payload = {
+    matricula,
+    valor_venda: parseFloat(document.getElementById('propValorVenda').value) || null,
+    fluxo:          document.getElementById('propFluxo').value.trim() || null,
+    quem_fez:       document.getElementById('propQuemFez').value.trim() || null,
+    pendencia:      document.getElementById('propPendencia').value.trim() || null,
+    quem_pendencia: document.getElementById('propQuemPendencia').value.trim() || null,
+    obs:            document.getElementById('propObs').value.trim() || null,
+  };
+
+  const isEdit = !!id;
+  const url = isEdit ? `/api/propostas/${id}` : '/api/propostas';
+  const method = isEdit ? 'PUT' : 'POST';
+
+  fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+    .then(r => {
+      if (!r.ok) return r.json().then(e => Promise.reject(e.error || 'Erro ao salvar'));
+      return r.json();
+    })
+    .then(() => {
+      fecharModalProposta();
+      carregarPropostas();
+      showToast(isEdit ? '✅ Proposta atualizada com sucesso' : '✅ Proposta cadastrada com sucesso');
+    })
+    .catch(err => showToast('❌ ' + err, true));
+}
 </script>
 </body>
 </html>
