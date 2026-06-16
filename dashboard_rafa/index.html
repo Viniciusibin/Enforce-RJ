@@ -1495,7 +1495,9 @@ let vendidos, naoVendidos, qtdVendidos, totalVendido, totalRecebido, vmNaoVendid
 function computeKPIs() {
   totalVM       = PROPERTIES.reduce((a,b) => a + (b.vm||0), 0);
   totalVF       = PROPERTIES.reduce((a,b) => a + (b.vf||0), 0);
-  totalPropostas = PROPERTIES.reduce((a,b) => a + (b.proposta || 0), 0);
+  totalPropostas = PROPERTIES
+    .filter(p => p.proposta > 0 && /negoci/i.test(p.statusVenda || ''))
+    .reduce((a, b) => a + b.proposta, 0);
   loc     = PROPERTIES.filter(p => p.localizacao === 'Localizado').length;
   partLoc = PROPERTIES.filter(p => p.localizacao === 'Parcialmente Localizado').length;
   nLoc    = PROPERTIES.filter(p => p.localizacao === 'Não Localizado').length;
