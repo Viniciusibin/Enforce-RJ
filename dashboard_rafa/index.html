@@ -1477,8 +1477,8 @@ async function autoLoadFiles() {
 
   try {
     [PROPERTIES_COTIA, PROPERTIES_COZAC] = await Promise.all([
-      loadFile('task rafael5.xlsx', 'cotia'),
-      loadFile('20250626_COZAC - ativos internalização (RPM).xlsx', 'cozac'),
+      loadFile('dados_cotia.xlsx', 'cotia'),
+      loadFile('dados cozac.xlsx', 'cozac'),
     ]);
   } catch (e) { /* silent */ }
 
