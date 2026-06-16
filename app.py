@@ -427,6 +427,13 @@ def index():
     )
 
 
+@app.route("/<path:filename>")
+def serve_dashboard_static(filename):
+    return send_from_directory(
+        os.path.join(app.root_path, "dashboard_rafa"), filename
+    )
+
+
 @app.route("/casos")
 def casos_dashboard():
     return render_template("index.html")

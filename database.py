@@ -1,214 +1,252 @@
 from __future__ import annotations
 
-import os
-import sqlite3
+import threading
+from datetime import datetime
+from pathlib import Path
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "instance", "prj.db")
+from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils import get_column_letter
+
+COZAC_PATH = Path(__file__).parent / "dados cozac.xlsx"
+COTIA_PATH  = Path(__file__).parent / "dados_cotia.xlsx"
+# IDs de Cotia são retornados como (real_id + COTIA_OFFSET) para nunca colidirem com Cozac
+COTIA_OFFSET = 10_000
+
+_lock = threading.Lock()
+
+IMOVEIS_COLS = [
+    "id", "mat_tipo", "tipologia", "cidade", "estado",
+    "vf_tombamento", "vm_tombamento", "resultado_localizacao",
+    "area_terreno", "unid_area_terreno", "cidade_imovel",
+    "classe_imovel", "tipo_imovel",
+    "valor_avaliacao", "valor_venda_forcada", "valor_venda_forcada_vp",
+    "laudo_avaliacao_lideratu", "lideratu_arquivo", "laudo_vm_sistema", "laudo_vf_sistema",
+    "nivel", "vm_enforce", "vf_enforce", "vf_laudo", "dt_laudo", "obs",
+    "status_tarefa", "dt_criacao_tarefa", "vf_laudo_att",
+    "status", "obs_status",
+    "tabela_gi", "proposta", "natureza", "valor_garantia", "comprador", "previsao_registro",
+    "lat", "lng",
+    "data_venda", "valor_venda_total", "fluxo_venda", "pendencia_venda", "quem_pendencia_venda",
+]
+
+PROPOSTAS_COLS = [
+    "id", "matricula", "valor_venda", "fluxo", "quem_fez",
+    "pendencia", "quem_pendencia", "obs", "created_at",
+]
+
+_HEADER_FILL = PatternFill("solid", fgColor="1F4E79")
+_HEADER_FONT = Font(color="FFFFFF", bold=True)
+_HEADER_ALIGN = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+_COL_WIDTHS = {
+    "id": 6, "mat_tipo": 18, "tipologia": 15, "cidade": 16, "estado": 8,
+    "vf_tombamento": 14, "vm_tombamento": 14, "resultado_localizacao": 20,
+    "area_terreno": 14, "unid_area_terreno": 12, "cidade_imovel": 16,
+    "classe_imovel": 14, "tipo_imovel": 14,
+    "valor_avaliacao": 16, "valor_venda_forcada": 18, "valor_venda_forcada_vp": 20,
+    "laudo_avaliacao_lideratu": 22, "lideratu_arquivo": 18,
+    "laudo_vm_sistema": 18, "laudo_vf_sistema": 18,
+    "nivel": 10, "vm_enforce": 12, "vf_enforce": 12, "vf_laudo": 12,
+    "dt_laudo": 12, "obs": 30,
+    "status_tarefa": 16, "dt_criacao_tarefa": 16, "vf_laudo_att": 14,
+    "status": 14, "obs_status": 24,
+    "tabela_gi": 12, "proposta": 14, "natureza": 14, "valor_garantia": 14,
+    "comprador": 20, "previsao_registro": 18,
+    "lat": 12, "lng": 12,
+    "data_venda": 12, "valor_venda_total": 16,
+    "fluxo_venda": 14, "pendencia_venda": 20, "quem_pendencia_venda": 20,
+}
 
 
-def get_connection() -> sqlite3.Connection:
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+def _style_header_row(ws, cols: list[str]) -> None:
+    for i, col in enumerate(cols, start=1):
+        cell = ws.cell(row=1, column=i, value=col)
+        cell.fill = _HEADER_FILL
+        cell.font = _HEADER_FONT
+        cell.alignment = _HEADER_ALIGN
+        ws.column_dimensions[get_column_letter(i)].width = _COL_WIDTHS.get(col, 14)
+    ws.row_dimensions[1].height = 30
+    ws.freeze_panes = "A2"
 
 
-def _add_column_if_missing(conn: sqlite3.Connection, table: str, column: str, col_type: str) -> None:
-    existing = {row[1] for row in conn.execute(f"PRAGMA table_info({table})").fetchall()}
-    if column not in existing:
-        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}")
+def _create_file(path: Path) -> None:
+    wb = Workbook()
+    ws_i = wb.active
+    ws_i.title = "Imoveis"
+    _style_header_row(ws_i, IMOVEIS_COLS)
+    ws_p = wb.create_sheet("Propostas")
+    _style_header_row(ws_p, PROPOSTAS_COLS)
+    wb.save(path)
+
+
+def _load_sheet(path: Path, sheet_name: str) -> list[dict]:
+    wb = load_workbook(path, read_only=True, data_only=True)
+    ws = wb[sheet_name]
+    rows = list(ws.iter_rows(values_only=True))
+    wb.close()
+    if not rows:
+        return []
+    header = [str(c) if c is not None else "" for c in rows[0]]
+    result = []
+    for row in rows[1:]:
+        if all(v is None for v in row):
+            continue
+        result.append(dict(zip(header, row)))
+    return result
+
+
+def _save_sheet(path: Path, sheet_name: str, cols: list[str], data_rows: list[dict]) -> None:
+    wb = load_workbook(path)
+    ws = wb[sheet_name]
+    for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
+        for cell in row:
+            cell.value = None
+    for row_idx, row in enumerate(data_rows, start=2):
+        for col_idx, col in enumerate(cols, start=1):
+            ws.cell(row=row_idx, column=col_idx, value=row.get(col))
+    wb.save(path)
+
+
+def _file_and_real_id(logical_id: int) -> tuple[Path, int]:
+    """Devolve (arquivo, id_real_no_arquivo) a partir do id lógico."""
+    if logical_id >= COTIA_OFFSET:
+        return COTIA_PATH, logical_id - COTIA_OFFSET
+    return COZAC_PATH, logical_id
 
 
 def init_db() -> None:
-    conn = get_connection()
-    conn.executescript("""
-        CREATE TABLE IF NOT EXISTS propostas (
-            id              INTEGER PRIMARY KEY AUTOINCREMENT,
-            matricula       TEXT NOT NULL,
-            valor_venda     REAL,
-            fluxo           TEXT,
-            quem_fez        TEXT,
-            pendencia       TEXT,
-            quem_pendencia  TEXT,
-            obs             TEXT,
-            created_at      TEXT DEFAULT (datetime('now'))
-        );
+    if not COZAC_PATH.exists():
+        _create_file(COZAC_PATH)
+    if not COTIA_PATH.exists():
+        _create_file(COTIA_PATH)
 
-        CREATE TABLE IF NOT EXISTS imoveis (
-            id                      INTEGER PRIMARY KEY AUTOINCREMENT,
 
-            -- Identificação
-            mat_tipo                TEXT,
-            tipologia               TEXT,
-            cidade                  TEXT,
-            estado                  TEXT,
+# ---------------------------------------------------------------------------
+# Imoveis
+# ---------------------------------------------------------------------------
 
-            -- Tombamento
-            vf_tombamento           REAL,
-            vm_tombamento           REAL,
-            resultado_localizacao   TEXT,
+def get_all_imoveis() -> list[dict]:
+    init_db()
+    result = []
+    for path, offset in [(COZAC_PATH, 0), (COTIA_PATH, COTIA_OFFSET)]:
+        if not path.exists():
+            continue
+        for row in _load_sheet(path, "Imoveis"):
+            r = dict(row)
+            if r.get("id") is not None:
+                r["id"] = int(r["id"]) + offset
+            result.append(r)
+    return result
 
-            -- Terreno
-            area_terreno            REAL,
-            unid_area_terreno       TEXT,
-            cidade_imovel           TEXT,
 
-            -- Classificação
-            classe_imovel           TEXT,
-            tipo_imovel             TEXT,
-
-            -- Valores
-            valor_avaliacao         REAL,
-            valor_venda_forcada     REAL,
-            valor_venda_forcada_vp  REAL,
-
-            -- Laudos
-            laudo_avaliacao_lideratu TEXT,
-            lideratu_arquivo         TEXT,
-            laudo_vm_sistema         TEXT,
-            laudo_vf_sistema         TEXT,
-
-            -- Enforce
-            nivel                   TEXT,
-            vm_enforce              REAL,
-            vf_enforce              REAL,
-            vf_laudo                REAL,
-            dt_laudo                TEXT,
-            obs                     TEXT,
-
-            -- Tarefa atual
-            status_tarefa           TEXT,
-            dt_criacao_tarefa       TEXT,
-            vf_laudo_att            REAL,
-
-            -- Status geral
-            status                  TEXT,
-            obs_status              TEXT,
-
-            -- Comercial
-            tabela_gi               TEXT,
-            proposta                TEXT,
-            natureza                TEXT,
-            valor_garantia          REAL,
-            comprador               TEXT,
-            previsao_registro       TEXT,
-
-            -- Geolocalização
-            lat                     REAL,
-            lng                     REAL
-        );
-    """)
-    # Migrate existing databases with new columns
-    for col, typ in [
-        ("data_venda",         "TEXT"),
-        ("valor_venda_total",  "REAL"),
-        ("fluxo_venda",        "TEXT"),
-        ("pendencia_venda",    "TEXT"),
-        ("quem_pendencia_venda", "TEXT"),
-    ]:
-        _add_column_if_missing(conn, "imoveis", col, typ)
-    conn.commit()
-    conn.close()
+def get_imovel(logical_id: int) -> dict | None:
+    path, real_id = _file_and_real_id(logical_id)
+    for r in _load_sheet(path, "Imoveis"):
+        if r.get("id") == real_id:
+            row = dict(r)
+            row["id"] = logical_id
+            return row
+    return None
 
 
 def get_imovel_by_mat(mat: str) -> dict | None:
-    conn = get_connection()
-    row = conn.execute(
-        "SELECT * FROM imoveis WHERE TRIM(mat_tipo) = TRIM(?)", (mat,)
-    ).fetchone()
-    conn.close()
-    return dict(row) if row else None
-
-
-def get_all_imoveis() -> list[dict]:
-    conn = get_connection()
-    rows = conn.execute("SELECT * FROM imoveis ORDER BY id").fetchall()
-    conn.close()
-    return [dict(row) for row in rows]
-
-
-def get_imovel(imovel_id: int) -> dict | None:
-    conn = get_connection()
-    row = conn.execute("SELECT * FROM imoveis WHERE id = ?", (imovel_id,)).fetchone()
-    conn.close()
-    return dict(row) if row else None
+    mat = str(mat).strip()
+    for path, offset in [(COZAC_PATH, 0), (COTIA_PATH, COTIA_OFFSET)]:
+        if not path.exists():
+            continue
+        for r in _load_sheet(path, "Imoveis"):
+            if str(r.get("mat_tipo") or "").strip() == mat:
+                row = dict(r)
+                if row.get("id") is not None:
+                    row["id"] = int(row["id"]) + offset
+                return row
+    return None
 
 
 def insert_imovel(data: dict) -> int:
-    columns = [c for c in data if c != "id"]
-    placeholders = ", ".join("?" for _ in columns)
-    sql = f"INSERT INTO imoveis ({', '.join(columns)}) VALUES ({placeholders})"
-    conn = get_connection()
-    cur = conn.execute(sql, [data[c] for c in columns])
-    conn.commit()
-    new_id = cur.lastrowid
-    conn.close()
+    # Novos imóveis vão para Cozac por padrão
+    with _lock:
+        rows = _load_sheet(COZAC_PATH, "Imoveis")
+        new_id = max((int(r.get("id") or 0) for r in rows), default=0) + 1
+        entry = dict(data)
+        entry["id"] = new_id
+        rows.append(entry)
+        _save_sheet(COZAC_PATH, "Imoveis", IMOVEIS_COLS, rows)
     return new_id
 
 
-def update_imovel(imovel_id: int, data: dict) -> bool:
-    columns = [c for c in data if c != "id"]
-    set_clause = ", ".join(f"{c} = ?" for c in columns)
-    sql = f"UPDATE imoveis SET {set_clause} WHERE id = ?"
-    conn = get_connection()
-    cur = conn.execute(sql, [data[c] for c in columns] + [imovel_id])
-    conn.commit()
-    updated = cur.rowcount > 0
-    conn.close()
+def update_imovel(logical_id: int, data: dict) -> bool:
+    path, real_id = _file_and_real_id(logical_id)
+    with _lock:
+        rows = _load_sheet(path, "Imoveis")
+        updated = False
+        for r in rows:
+            if r.get("id") == real_id:
+                r.update({k: v for k, v in data.items() if k != "id"})
+                updated = True
+                break
+        if updated:
+            _save_sheet(path, "Imoveis", IMOVEIS_COLS, rows)
     return updated
 
 
-def delete_imovel(imovel_id: int) -> bool:
-    conn = get_connection()
-    cur = conn.execute("DELETE FROM imoveis WHERE id = ?", (imovel_id,))
-    conn.commit()
-    deleted = cur.rowcount > 0
-    conn.close()
-    return deleted
+def delete_imovel(logical_id: int) -> bool:
+    path, real_id = _file_and_real_id(logical_id)
+    with _lock:
+        rows = _load_sheet(path, "Imoveis")
+        new_rows = [r for r in rows if r.get("id") != real_id]
+        if len(new_rows) == len(rows):
+            return False
+        _save_sheet(path, "Imoveis", IMOVEIS_COLS, new_rows)
+    return True
 
+
+# ---------------------------------------------------------------------------
+# Propostas (ficam em Cozac)
+# ---------------------------------------------------------------------------
 
 def get_all_propostas() -> list[dict]:
-    conn = get_connection()
-    rows = conn.execute("SELECT * FROM propostas ORDER BY id").fetchall()
-    conn.close()
-    return [dict(row) for row in rows]
+    init_db()
+    return _load_sheet(COZAC_PATH, "Propostas")
 
 
 def get_proposta(proposta_id: int) -> dict | None:
-    conn = get_connection()
-    row = conn.execute("SELECT * FROM propostas WHERE id = ?", (proposta_id,)).fetchone()
-    conn.close()
-    return dict(row) if row else None
+    for r in get_all_propostas():
+        if r.get("id") == proposta_id:
+            return r
+    return None
 
 
 def insert_proposta(data: dict) -> int:
-    allowed = {"matricula", "valor_venda", "fluxo", "quem_fez", "pendencia", "quem_pendencia", "obs"}
-    columns = [c for c in data if c in allowed]
-    placeholders = ", ".join("?" for _ in columns)
-    sql = f"INSERT INTO propostas ({', '.join(columns)}) VALUES ({placeholders})"
-    conn = get_connection()
-    cur = conn.execute(sql, [data[c] for c in columns])
-    conn.commit()
-    new_id = cur.lastrowid
-    conn.close()
+    with _lock:
+        rows = get_all_propostas()
+        new_id = max((int(r.get("id") or 0) for r in rows), default=0) + 1
+        entry = dict(data)
+        entry["id"] = new_id
+        if "created_at" not in entry:
+            entry["created_at"] = datetime.now().isoformat(timespec="seconds")
+        rows.append(entry)
+        _save_sheet(COZAC_PATH, "Propostas", PROPOSTAS_COLS, rows)
     return new_id
 
 
 def update_proposta(proposta_id: int, data: dict) -> bool:
     allowed = {"matricula", "valor_venda", "fluxo", "quem_fez", "pendencia", "quem_pendencia", "obs"}
-    columns = [c for c in data if c in allowed]
-    if not columns:
-        return False
-    set_clause = ", ".join(f"{c} = ?" for c in columns)
-    sql = f"UPDATE propostas SET {set_clause} WHERE id = ?"
-    conn = get_connection()
-    cur = conn.execute(sql, [data[c] for c in columns] + [proposta_id])
-    conn.commit()
-    updated = cur.rowcount > 0
-    conn.close()
+    with _lock:
+        rows = get_all_propostas()
+        updated = False
+        for r in rows:
+            if r.get("id") == proposta_id:
+                r.update({k: v for k, v in data.items() if k in allowed})
+                updated = True
+                break
+        if updated:
+            _save_sheet(COZAC_PATH, "Propostas", PROPOSTAS_COLS, rows)
     return updated
 
 
 if __name__ == "__main__":
     init_db()
-    print(f"Banco de dados inicializado em: {DB_PATH}")
+    print(f"Cozac: {COZAC_PATH}")
+    print(f"Cotia: {COTIA_PATH}")

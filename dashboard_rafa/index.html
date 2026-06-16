@@ -659,6 +659,54 @@
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
+    /* ── TAB NAVIGATION ─────────────────────────────── */
+    .tab-nav {
+      background: linear-gradient(135deg, #0a1628 0%, #0e2040 100%);
+      border-bottom: 2px solid var(--border);
+      padding: 0 32px;
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      position: sticky;
+      top: 68px;
+      z-index: 999;
+    }
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px 10px;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: 10px 10px 0 0;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: .01em;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { color: var(--text); background: rgba(255,255,255,.04); }
+    .tab-btn.active {
+      color: var(--primary);
+      background: var(--bg);
+      border-color: var(--border);
+      border-bottom-color: var(--bg);
+      margin-bottom: -2px;
+    }
+    .tab-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 10px;
+      background: rgba(59,130,246,.15);
+      color: #60a5fa;
+    }
+    .tab-btn.active .tab-badge { background: rgba(59,130,246,.2); color: var(--primary); }
+
     .table-scroll { overflow-x: auto; }
 
     /* ── COMPARISON BAR ─────────────────────────────── */
@@ -828,6 +876,18 @@
 </header>
 <div class="import-toast" id="importToast"></div>
 
+<!-- TAB NAVIGATION -->
+<div class="tab-nav">
+  <button class="tab-btn active" id="tabCotia" onclick="switchTab('cotia')">
+    🏘️ Cotia
+    <span class="tab-badge" id="tabBadgeCotia">—</span>
+  </button>
+  <button class="tab-btn" id="tabCozac" onclick="switchTab('cozac')">
+    🏙️ Cozac
+    <span class="tab-badge" id="tabBadgeCozac">—</span>
+  </button>
+</div>
+
 <main>
   <!-- KPI CARDS -->
   <div class="section-title">Vis&atilde;o Geral do Portfolio</div>
@@ -845,10 +905,10 @@
       <div class="kpi-sub">Soma VM Enforce</div>
     </div>
     <div class="kpi-card cyan">
-      <div class="kpi-icon">📉</div>
-      <div class="kpi-value" id="kpiVF">—</div>
-      <div class="kpi-label">Venda For&ccedil;ada Total (VF)</div>
-      <div class="kpi-sub">Soma VF Enforce</div>
+      <div class="kpi-icon">🤝</div>
+      <div class="kpi-value" id="kpiPropostas">—</div>
+      <div class="kpi-label">Soma das Propostas</div>
+      <div class="kpi-sub">Total em propostas recebidas</div>
     </div>
   </div>
 
@@ -1283,29 +1343,45 @@
 
 <script>
 // ── DATA ─────────────────────────────────────────────────────────────
-let PROPERTIES = [];
+let activeTab = 'cotia';
+
+let PROPERTIES_COTIA = [];
+let PROPERTIES_COZAC = [];
 
 // ── DADOS DE VENDA (fallback para planilhas sem coluna Proposta) ──────
 const SALES = {};
 
-// ── FLUXO DE RECEBIMENTO ─────────────────────────────────────────────
-// Editável: cada entrada representa uma linha do fluxo (sinal + parcelas)
-// totalVenda: valor total da venda | recebido: valor já recebido
-// parcelas: [ { label, data, principal, juros } ]
-let FLUXO = {
+// ── FLUXO DE RECEBIMENTO — COTIA ─────────────────────────────────────
+let FLUXO_COTIA = {
   totalRecebido: 21800000,
   totalRemanescente: 38464568.16,
   linhas: [
     { mat: '6.896',                   recebido: 5400000,  remanescente: 12600000,   dataBaixa: '05/11/2025', criterio: '30% à vista e restante pago na data da escritura sem correção',        comprador: 'MC Incorporações',                 valorVenda: 18000000 },
     { mat: '579',                     recebido: 900000,   remanescente: null,        dataBaixa: '30/10/2025 e 31/10/2025', criterio: '',                                                                    comprador: 'Eucamed',                          valorVenda: 900000   },
-    { mat: '6193',                    recebido: null,     remanescente: null,        pendente: true,  ordem: 1,            criterio: '',                                                                    comprador: 'Cooperativa INTEGRADA',            valorVenda: null     },
-    { mat: '5377',                    recebido: null,     remanescente: null,        pendente: true,  ordem: 2,            criterio: '',                                                                    comprador: 'Cooperativa INTEGRADA',            valorVenda: null     },
-    { mat: '9846',                    recebido: null,     remanescente: null,        pendente: true,  ordem: 3,            criterio: '',                                                                    comprador: 'Cooperativa INTEGRADA',            valorVenda: null     },
+    { mat: '6193',                    recebido: null,     remanescente: null,                                             criterio: '',                                                                    comprador: 'Cooperativa INTEGRADA',            valorVenda: null     },
+    { mat: '5377',                    recebido: null,     remanescente: null,        dataBaixa: '02/10/2026',             criterio: '',                                                                    comprador: 'Cooperativa INTEGRADA',            valorVenda: null     },
+    { mat: '9846',                    recebido: null,     remanescente: null,        dataBaixa: '02/10/2026',             criterio: '',                                                                    comprador: 'Cooperativa INTEGRADA',            valorVenda: null     },
     { mat: '23697',                   recebido: 10400000, remanescente: 20964568.16, dataBaixa: '02/01/2016', ordem: 4,   criterio: '+ 3 parcelas anuais de R$ 5.200.000,00 corrigidas a CDI + 1,5% a.a', comprador: 'Cooperativa INTEGRADA',            valorVenda: 26000000 },
     { mat: '1615',                    recebido: 2100000,  remanescente: 4900000,     dataBaixa: '13/03/2026',              criterio: '30% à vista e restante pago na data da escritura sem correção',       comprador: 'Cooperativa Agricola de Canoinhas',valorVenda: 7000000  },
     { mat: '1.756, 1.757, 1.758 E 1.759', recebido: 3000000, remanescente: null,    dataBaixa: '12/01/2026',              criterio: 'Indenização relacionada a depreciação de imóvel adjudicado',          comprador: '—',                                valorVenda: 3000000  },
   ]
 };
+
+// ── FLUXO DE RECEBIMENTO — COZAC ─────────────────────────────────────
+let FLUXO_COZAC = {
+  totalRecebido: 0,
+  totalRemanescente: 0,
+  linhas: [],
+};
+
+// ── PROPOSTAS ─────────────────────────────────────────────────────────
+let PROPOSTAS_COTIA = [];
+let PROPOSTAS_COZAC = [];
+
+// ── REFERÊNCIAS ATIVAS (mudam ao trocar de aba) ───────────────────────
+let PROPERTIES = PROPERTIES_COTIA;
+let FLUXO = FLUXO_COTIA;
+let PROPOSTAS = PROPOSTAS_COTIA;
 
 // ── HELPERS ───────────────────────────────────────────────────────────
 const fmt = (v) => {
@@ -1324,13 +1400,102 @@ const fmtArea = (v, u) => {
 // Lat/Lng preservados do dado inicial para usar ao importar planilha (que não tem coordenadas)
 const LAT_LNG_BY_MAT = {};
 
+// Coordenadas aproximadas das cidades presentes na carteira
+const CITY_COORDS = {
+  'Assaí/PR':                    { lat: -23.3742, lng: -50.8647 },
+  'Assis Chateaubriand/PR':      { lat: -24.4106, lng: -53.5201 },
+  'Bragança Paulista/SP':        { lat: -22.9522, lng: -46.5418 },
+  'Canoinhas/SC':                { lat: -26.1783, lng: -50.3894 },
+  'Chapadão Do Céu/GO':          { lat: -18.9858, lng: -52.6253 },
+  'Curitibanos/SC':              { lat: -27.2831, lng: -50.5803 },
+  'Dourados/MS':                 { lat: -22.2211, lng: -54.8057 },
+  'Estrela do Sul/MG':           { lat: -18.7339, lng: -47.6903 },
+  'Floraí/PR':                   { lat: -23.3264, lng: -52.2714 },
+  'Floresta/PR':                 { lat: -23.5997, lng: -52.0808 },
+  'Fátima do Sul/MS':            { lat: -22.5139, lng: -54.5494 },
+  'Guaira/PR':                   { lat: -24.0786, lng: -54.2569 },
+  'Guarapuava/PR':               { lat: -25.3945, lng: -51.4628 },
+  'Ilha Comprida/SP':            { lat: -24.7147, lng: -47.5295 },
+  'Indaiatuba/SP':               { lat: -23.0897, lng: -47.2172 },
+  'Itaberá/SP':                  { lat: -23.8664, lng: -49.1408 },
+  'Jacareí/SP':                  { lat: -23.3053, lng: -45.9661 },
+  'Londrina/PR':                 { lat: -23.3045, lng: -51.1696 },
+  'Maringá/PR':                  { lat: -23.4205, lng: -51.9333 },
+  'Mauá da Serra/PR':            { lat: -23.9639, lng: -51.1731 },
+  'Piedade/SP':                  { lat: -23.7128, lng: -47.4231 },
+  'Rancho Alegre/PR':            { lat: -23.2667, lng: -51.0000 },
+  'Ribeirão Preto/SP':           { lat: -21.1704, lng: -47.8103 },
+  'Rio de Janeiro/RJ':           { lat: -22.9068, lng: -43.1729 },
+  'Santo Anastácio/SP':          { lat: -21.9758, lng: -51.6528 },
+  'Santos/SP':                   { lat: -23.9608, lng: -46.3336 },
+  'São Joaquim/SC':              { lat: -28.2947, lng: -49.9317 },
+  'São Paulo/SP':                { lat: -23.5558, lng: -46.6396 },
+  'São Roque/SP':                { lat: -23.5283, lng: -47.1319 },
+  'Taciba/SP':                   { lat: -22.3753, lng: -51.2889 },
+  'Tatuí/SP':                    { lat: -23.3567, lng: -47.8572 },
+  'Tiros/MG':                    { lat: -18.9839, lng: -45.9706 },
+  'Vargem Grande Paulista/SP':   { lat: -23.5992, lng: -47.0281 },
+};
+
+// ── TAB SWITCH ────────────────────────────────────────────────────────
+function switchTab(tab) {
+  activeTab = tab;
+  PROPERTIES = tab === 'cotia' ? PROPERTIES_COTIA : PROPERTIES_COZAC;
+  FLUXO      = tab === 'cotia' ? FLUXO_COTIA      : FLUXO_COZAC;
+  PROPOSTAS  = tab === 'cotia' ? PROPOSTAS_COTIA   : PROPOSTAS_COZAC;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab' + tab[0].toUpperCase() + tab.slice(1)).classList.add('active');
+  const btn = document.getElementById('importBtn');
+  if (btn) btn.textContent = '📂 Importar ' + (tab === 'cotia' ? 'Cotia' : 'Cozac');
+  renderAll();
+}
+
+function updateTabBadges() {
+  const bc = document.getElementById('tabBadgeCotia');
+  const bz = document.getElementById('tabBadgeCozac');
+  if (bc) bc.textContent = PROPERTIES_COTIA.length || '—';
+  if (bz) bz.textContent = PROPERTIES_COZAC.length || '—';
+}
+
+// ── AUTO-LOAD DOS ARQUIVOS XLSX ────────────────────────────────────────
+async function autoLoadFiles() {
+  const loadFile = async (filename, tab) => {
+    const tryPath = async (path) => {
+      try {
+        const r = await fetch(path);
+        if (!r.ok) return null;
+        const buf = await r.arrayBuffer();
+        const wb = XLSX.read(new Uint8Array(buf), { type: 'array', cellDates: true });
+        return parseExcelToProperties(wb, tab);
+      } catch (e) { return null; }
+    };
+    // Tenta caminho encodado e literal
+    return (await tryPath('./' + encodeURIComponent(filename)))
+        || (await tryPath('./' + filename))
+        || [];
+  };
+
+  try {
+    [PROPERTIES_COTIA, PROPERTIES_COZAC] = await Promise.all([
+      loadFile('task rafael5.xlsx', 'cotia'),
+      loadFile('20250626_COZAC - ativos internalização (RPM).xlsx', 'cozac'),
+    ]);
+  } catch (e) { /* silent */ }
+
+  PROPERTIES_COTIA.forEach(p => { if (p.lat && p.lng) LAT_LNG_BY_MAT[String(p.mat)] = { lat: p.lat, lng: p.lng }; });
+  PROPERTIES = PROPERTIES_COTIA;
+  updateTabBadges();
+  renderAll();
+}
+
 // ── KPIs ──────────────────────────────────────────────────────────────
-let totalVM, totalVF, loc, partLoc, nLoc, rural, urbano, total;
+let totalVM, totalVF, totalPropostas, loc, partLoc, nLoc, rural, urbano, total;
 let vendidos, naoVendidos, qtdVendidos, totalVendido, totalRecebido, vmNaoVendido, vfNaoVendido, totalTabelaGI, saldoVF;
 
 function computeKPIs() {
-  totalVM = PROPERTIES.reduce((a,b) => a + (b.vm||0), 0);
-  totalVF = PROPERTIES.reduce((a,b) => a + (b.vf||0), 0);
+  totalVM       = PROPERTIES.reduce((a,b) => a + (b.vm||0), 0);
+  totalVF       = PROPERTIES.reduce((a,b) => a + (b.vf||0), 0);
+  totalPropostas = PROPERTIES.reduce((a,b) => a + (b.proposta || 0), 0);
   loc     = PROPERTIES.filter(p => p.localizacao === 'Localizado').length;
   partLoc = PROPERTIES.filter(p => p.localizacao === 'Parcialmente Localizado').length;
   nLoc    = PROPERTIES.filter(p => p.localizacao === 'Não Localizado').length;
@@ -1391,8 +1556,8 @@ function renderKPIs() {
   animCount(document.getElementById('kpiVM'), totalVM/1e6, 'R$ ', 1);
   setTimeout(() => document.getElementById('kpiVM').textContent = 'R$ ' + (totalVM/1e6).toFixed(1) + 'M', 1250);
 
-  animCount(document.getElementById('kpiVF'), totalVF/1e6, 'R$ ', 1);
-  setTimeout(() => document.getElementById('kpiVF').textContent = 'R$ ' + (totalVF/1e6).toFixed(1) + 'M', 1250);
+  animCount(document.getElementById('kpiPropostas'), totalPropostas/1e6, 'R$ ', 1);
+  setTimeout(() => document.getElementById('kpiPropostas').textContent = 'R$ ' + (totalPropostas/1e6).toFixed(1) + 'M', 1250);
 
   const vendPct = total > 0 ? Math.round(qtdVendidos / total * 100) : 0;
   document.getElementById('kpiVendidosPct').textContent = vendPct + '%';
@@ -1427,6 +1592,7 @@ function reorderDashboardSections() {
 }
 
 function renderAll() {
+  updateTabBadges();
   computeKPIs();
   renderKPIs();
   document.getElementById('mapCount').textContent = PROPERTIES.filter(p=>p.lat).length + ' marcadores';
@@ -1482,15 +1648,15 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('cardRecebido').addEventListener('click', openModalFluxo);
   document.getElementById('fileInput').addEventListener('change', handleFileImport);
 
-  fetch('/api/imoveis')
-    .then(r => r.json())
-    .then(data => {
-      PROPERTIES = data;
-      PROPERTIES.forEach(p => { if (p.lat && p.lng) LAT_LNG_BY_MAT[String(p.mat)] = { lat: p.lat, lng: p.lng }; });
-      document.getElementById('liveCount').textContent = PROPERTIES.length;
-      renderAll();
-    })
-    .catch(() => renderAll());
+  // Atualiza label do botão de importar conforme a aba ativa
+  function syncImportBtnLabel() {
+    const btn = document.getElementById('importBtn');
+    if (btn) btn.textContent = '📂 Importar ' + (activeTab === 'cotia' ? 'Cotia' : 'Cozac');
+  }
+  syncImportBtnLabel();
+
+  // Carrega os dois arquivos XLSX automaticamente
+  autoLoadFiles();
 });
 
 // ── MAP ───────────────────────────────────────────────────────────────
@@ -2017,21 +2183,46 @@ function parseNum(v) {
   return isNaN(n) ? null : n;
 }
 
-function parseExcelToProperties(workbook) {
-  const sheetName = workbook.SheetNames[0];
+function parseExcelToProperties(workbook, tab) {
+  tab = tab || 'cotia';
+
+  let sheetName;
+  if (tab === 'cozac') {
+    sheetName = workbook.SheetNames.find(n => n.includes('VENDAS')) || workbook.SheetNames[0];
+  } else {
+    sheetName = workbook.SheetNames[0];
+  }
+
+  if (tab === 'cozac') {
+    // A planilha Cozac tem linhas de sumário antes do cabeçalho real.
+    // Lemos como array bruto e localizamos a linha que contém 'Mat.'
+    const raw = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: null });
+    const headerIdx = raw.findIndex(row => row.some(c => c != null && String(c).trim().toLowerCase() === 'mat.'));
+    if (headerIdx === -1) return [];
+    const headers = raw[headerIdx];
+    const rows = raw.slice(headerIdx + 1).map(row => {
+      const obj = {};
+      headers.forEach((h, i) => { if (h != null) obj[String(h).trim()] = row[i] ?? null; });
+      return obj;
+    });
+    return rows.map(parseCozacRow).filter(p => p && p.mat && p.mat !== '—' && p.mat !== 'null');
+  }
+
   const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: null });
 
   return rows.map(row => {
-    const mat = String(colVal(row,
-      'mat.', 'mat', 'matrícula', 'matricula', 'codigo', 'código', 'id') ?? '—').trim();
+    const mat    = String(colVal(row, 'mat.', 'mat', 'matrícula', 'matricula', 'codigo', 'código', 'id') ?? '—').trim();
+    const cidade = String(colVal(row, 'cidade', 'municipio', 'município') ?? '—');
+    const estado = String(colVal(row, 'estado', 'uf') ?? '—');
 
-    const coords = LAT_LNG_BY_MAT[mat] || {};
+    const coords     = LAT_LNG_BY_MAT[mat] || {};
+    const cityCoords = CITY_COORDS[`${cidade}/${estado}`] || {};
 
     return {
       mat,
       tipologia:   String(colVal(row, 'tipologia', 'tipo do imóvel', 'tipo do imovel', 'tipo imovel') ?? '—'),
-      cidade:      String(colVal(row, 'cidade', 'municipio', 'município') ?? '—'),
-      estado:      String(colVal(row, 'estado', 'uf') ?? '—'),
+      cidade,
+      estado,
       tipo:        String(colVal(row, 'tipo', 'classificação', 'classificacao') ?? 'Urbano'),
       vm:          parseNum(colVal(row, 'vm enforce', 'vm', 'valor avaliação', 'valor avaliacao', 'valor de mercado')) ?? 0,
       vf:          parseNum(colVal(row, 'vf enforce', 'vf', 'valor venda forçada', 'valor venda forcada')) ?? 0,
@@ -2046,10 +2237,60 @@ function parseExcelToProperties(workbook) {
       proposta:         parseNum(colVal(row, 'proposta', 'valor proposta', 'proposta valor')),
       comprador:        colVal(row, 'comprador') || null,
       previsaoRegistro: fmtDate(colVal(row, 'previsão de registro', 'previsao de registro', 'previsão registro', 'previsao registro')),
-      lat:         parseNum(colVal(row, 'lat', 'latitude'))  ?? coords.lat ?? null,
-      lng:         parseNum(colVal(row, 'lng', 'long', 'longitude')) ?? coords.lng ?? null,
+      lat:         parseNum(colVal(row, 'lat', 'latitude'))  ?? coords.lat ?? cityCoords.lat ?? null,
+      lng:         parseNum(colVal(row, 'lng', 'long', 'longitude')) ?? coords.lng ?? cityCoords.lng ?? null,
     };
   }).filter(p => p.mat && p.mat !== '—' && p.mat !== 'null');
+}
+
+function parseCozacRow(row) {
+  const mat = String(colVal(row, 'mat.', 'mat', 'matrícula', 'matricula') ?? '—').trim();
+
+  // Cidade pode vir no formato "Ribeirão Preto/SP"
+  const cidadeRaw = String(colVal(row, 'cidade') ?? '').trim();
+  let cidade = cidadeRaw, estado = 'SP';
+  if (cidadeRaw.includes('/')) {
+    const idx = cidadeRaw.lastIndexOf('/');
+    cidade = cidadeRaw.slice(0, idx).trim();
+    estado = cidadeRaw.slice(idx + 1).trim();
+  }
+
+  // Status de venda — mapeia "Status atual" + "Tem proposta?"
+  const statusAtual  = String(colVal(row, 'status atual') ?? '').trim().toLowerCase();
+  const temProposta  = String(colVal(row, 'tem proposta?') ?? '').trim().toLowerCase();
+  let statusVenda;
+  if (statusAtual === 'vendido') {
+    statusVenda = 'Vendido';
+  } else if (statusAtual === 'aprovado - em escritura') {
+    statusVenda = 'Proposta em Fase de Minuta';
+  } else if (temProposta === 'ok' || temProposta === 'sim') {
+    statusVenda = 'Proposta em Negociação';
+  } else {
+    statusVenda = 'Não Vendido';
+  }
+
+  return {
+    mat,
+    tipologia:        String(colVal(row, 'tipologia') ?? '—'),
+    cidade,
+    estado,
+    tipo:             String(colVal(row, 'tipo') ?? 'Urbano'),
+    vm:               parseNum(colVal(row, 'vm liq', 'valor avaliação', 'valor avaliacao')) ?? 0,
+    vf:               parseNum(colVal(row, 'vf liq.', 'vf liq', 'valor venda forçada', 'valor venda forcada', 'vf')) ?? 0,
+    area:             null,
+    unidade:          null,
+    nivel:            null,
+    localizacao:      null,
+    status:           null,
+    statusVenda,
+    obs:              colVal(row, 'obs') || null,
+    tabelaGI:         colVal(row, 'tabela gi', 'tabelagi') || null,
+    proposta:         parseNum(colVal(row, 'melhor proposta (ativa)', 'valor recebido / proposta', 'proposta')),
+    comprador:        colVal(row, 'comprador') || null,
+    previsaoRegistro: fmtDate(colVal(row, 'data registro', 'previsão de registro')) || null,
+    lat:              null,
+    lng:              null,
+  };
 }
 
 function showToast(msg, isError = false) {
@@ -2064,6 +2305,7 @@ function handleFileImport(e) {
   const file = e.target.files[0];
   if (!file) return;
   const btn = document.getElementById('importBtn');
+  const tabLabel = activeTab === 'cotia' ? 'Cotia' : 'Cozac';
   btn.textContent = '⏳ Carregando...';
   btn.classList.remove('success');
 
@@ -2071,17 +2313,26 @@ function handleFileImport(e) {
   reader.onload = (evt) => {
     try {
       const data = new Uint8Array(evt.target.result);
-      const wb = XLSX.read(data, { type: 'array' });
-      const parsed = parseExcelToProperties(wb);
+      const wb = XLSX.read(data, { type: 'array', cellDates: true });
+      const parsed = parseExcelToProperties(wb, activeTab);
       if (!parsed.length) throw new Error('Nenhum dado encontrado na planilha.');
-      PROPERTIES = parsed;
+      if (activeTab === 'cotia') {
+        PROPERTIES_COTIA = parsed;
+        PROPERTIES = PROPERTIES_COTIA;
+      } else {
+        PROPERTIES_COZAC = parsed;
+        PROPERTIES = PROPERTIES_COZAC;
+      }
       renderAll();
       btn.textContent = '✅ ' + file.name.slice(0, 22) + (file.name.length > 22 ? '…' : '');
       btn.classList.add('success');
-      showToast('✅ ' + parsed.length + ' imóveis carregados de ' + file.name);
-      setTimeout(() => { btn.textContent = '📂 Importar Planilha'; btn.classList.remove('success'); }, 5000);
+      showToast('✅ ' + parsed.length + ' imóveis carregados (' + tabLabel + ')');
+      setTimeout(() => {
+        btn.textContent = '📂 Importar ' + tabLabel;
+        btn.classList.remove('success');
+      }, 5000);
     } catch (err) {
-      btn.textContent = '📂 Importar Planilha';
+      btn.textContent = '📂 Importar ' + tabLabel;
       showToast('❌ Erro ao ler a planilha: ' + err.message, true);
     }
     e.target.value = '';
@@ -2191,11 +2442,8 @@ document.addEventListener('click', (e) => {
   });
 });
 
-// ── PROPOSTAS ─────────────────────────────────────────────────────────
-let PROPOSTAS = [];
-
 function renderPropostasTable() {
-  const tbody = document.getElementById('propostasTableBody');
+  const tbody = document.getElementById('propostasWorkflowBody');
   if (!PROPOSTAS.length) {
     tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:24px">Nenhuma proposta cadastrada.</td></tr>';
     return;
@@ -2227,7 +2475,13 @@ function carregarPropostas() {
   fetch('/api/propostas')
     .then(r => r.json())
     .then(data => {
-      PROPOSTAS = data;
+      if (activeTab === 'cotia') {
+        PROPOSTAS_COTIA = data;
+        PROPOSTAS = PROPOSTAS_COTIA;
+      } else {
+        PROPOSTAS_COZAC = data;
+        PROPOSTAS = PROPOSTAS_COZAC;
+      }
       renderPropostasTable();
     })
     .catch(() => {});
@@ -2376,13 +2630,7 @@ function salvarVenda() {
     .then(() => {
       fecharModalVenda();
       showToast('✅ Venda registrada com sucesso');
-      // Reload properties and re-render
-      fetch('/api/imoveis')
-        .then(r => r.json())
-        .then(data => {
-          PROPERTIES = data;
-          renderAll();
-        });
+      renderAll();
     })
     .catch(err => showToast('❌ ' + err, true));
 }
