@@ -8,28 +8,31 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap" rel="stylesheet" />
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #060d1a;
-      --surface: #0e1a2d;
-      --surface2: #152238;
-      --border: #1e3052;
-      --primary: #3b82f6;
-      --primary-glow: rgba(59,130,246,.25);
+      --bg: #060c17;
+      --surface: #0b1827;
+      --surface2: #101f35;
+      --border: #1b2e4c;
+      --primary: #3471f5;
+      --primary-glow: rgba(52,113,245,.25);
       --accent: #06b6d4;
-      --green: #10b981;
-      --amber: #f59e0b;
-      --red: #ef4444;
-      --purple: #a855f7;
-      --text: #f1f5f9;
-      --text-muted: #64748b;
-      --text-soft: #94a3b8;
-      --radius: 14px;
-      --shadow: 0 4px 24px rgba(0,0,0,.4);
+      --gold: #c8972e;
+      --gold-glow: rgba(200,151,46,.18);
+      --green: #0ea572;
+      --amber: #e09628;
+      --red: #e53e3e;
+      --purple: #9f5fea;
+      --text: #ecf1fb;
+      --text-muted: #506b87;
+      --text-soft: #7b9bb8;
+      --radius: 12px;
+      --shadow: 0 4px 24px rgba(0,0,0,.45);
+      --font-data: 'DM Mono', 'Fira Code', ui-monospace, monospace;
     }
 
     body {
@@ -41,7 +44,7 @@
 
     /* ── TOP NAV ────────────────────────────────────── */
     header {
-      background: linear-gradient(135deg, #0a1628 0%, #0e2040 100%);
+      background: linear-gradient(160deg, #08142a 0%, #0c1e40 60%, #0d2248 100%);
       border-bottom: 1px solid var(--border);
       padding: 0 32px;
       height: 68px;
@@ -52,6 +55,7 @@
       top: 0;
       z-index: 1000;
       backdrop-filter: blur(12px);
+      box-shadow: 0 1px 0 var(--border), 0 6px 28px rgba(6,12,23,.6);
     }
     .logo {
       display: flex;
@@ -62,7 +66,7 @@
       width: 40px;
       height: 40px;
       border-radius: 10px;
-      background: linear-gradient(135deg, var(--primary), var(--accent));
+      background: linear-gradient(145deg, var(--primary) 0%, var(--gold) 130%);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -71,6 +75,7 @@
       letter-spacing: -0.5px;
       color: #fff;
       flex-shrink: 0;
+      box-shadow: 0 2px 12px rgba(52,113,245,.35), 0 0 0 1px rgba(200,151,46,.2);
     }
     .logo-text { line-height: 1.2; }
     .logo-title { font-size: 16px; font-weight: 700; color: var(--text); }
@@ -276,22 +281,16 @@
     }
     .kpi-card:hover {
       transform: translateY(-2px);
-      border-color: var(--primary);
+      background: var(--surface2);
     }
-    .kpi-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      border-radius: var(--radius) var(--radius) 0 0;
-    }
-    .kpi-card.blue::before   { background: linear-gradient(90deg, var(--primary), var(--accent)); }
-    .kpi-card.green::before  { background: linear-gradient(90deg, var(--green), #34d399); }
-    .kpi-card.amber::before  { background: linear-gradient(90deg, var(--amber), #fcd34d); }
-    .kpi-card.red::before    { background: linear-gradient(90deg, var(--red), #f87171); }
-    .kpi-card.purple::before { background: linear-gradient(90deg, var(--purple), #c084fc); }
-    .kpi-card.cyan::before   { background: linear-gradient(90deg, var(--accent), #67e8f9); }
-    .kpi-card.orange::before { background: linear-gradient(90deg, #f97316, #fb923c); }
+    .kpi-card::before { display: none; }
+    .kpi-card.blue   { border-left: 3px solid var(--primary); }
+    .kpi-card.green  { border-left: 3px solid var(--green); }
+    .kpi-card.amber  { border-left: 3px solid var(--amber); }
+    .kpi-card.red    { border-left: 3px solid var(--red); }
+    .kpi-card.purple { border-left: 3px solid var(--purple); }
+    .kpi-card.cyan   { border-left: 3px solid var(--accent); }
+    .kpi-card.orange { border-left: 3px solid #f97316; }
 
     .kpi-icon {
       width: 42px;
@@ -326,11 +325,13 @@
     .sale-progress-fill.green-fill { background: linear-gradient(90deg, var(--green), #34d399); }
 
     .kpi-value {
-      font-size: 26px;
-      font-weight: 800;
+      font-family: var(--font-data);
+      font-size: 25px;
+      font-weight: 500;
       line-height: 1;
       margin-bottom: 6px;
-      letter-spacing: -0.5px;
+      letter-spacing: -0.3px;
+      font-variant-numeric: tabular-nums;
     }
     .kpi-label {
       font-size: 12px;
@@ -379,7 +380,7 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 24px;
-      box-shadow: var(--shadow);
+      box-shadow: 0 2px 16px rgba(0,0,0,.35);
     }
     .card-header {
       display: flex;
@@ -534,14 +535,14 @@
     }
     .data-table th {
       text-align: left;
-      padding: 10px 14px;
+      padding: 11px 14px;
       background: var(--surface2);
       color: var(--text-muted);
-      font-size: 10.5px;
+      font-size: 10px;
       font-weight: 600;
-      letter-spacing: .06em;
+      letter-spacing: .08em;
       text-transform: uppercase;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 2px solid var(--border);
       white-space: nowrap;
       cursor: pointer;
       user-select: none;
@@ -561,21 +562,22 @@
     .chip {
       display: inline-flex;
       align-items: center;
-      padding: 2px 8px;
-      border-radius: 5px;
-      font-size: 10.5px;
+      padding: 2px 9px;
+      border-radius: 4px;
+      font-size: 10px;
       font-weight: 600;
+      letter-spacing: .03em;
       white-space: nowrap;
     }
-    .chip-green  { background: rgba(16,185,129,.15); color: #34d399; border: 1px solid rgba(16,185,129,.25); }
-    .chip-amber  { background: rgba(245,158,11,.15);  color: #fcd34d; border: 1px solid rgba(245,158,11,.25); }
-    .chip-red    { background: rgba(239,68,68,.15);   color: #f87171; border: 1px solid rgba(239,68,68,.25); }
-    .chip-blue   { background: rgba(59,130,246,.15);  color: #93c5fd; border: 1px solid rgba(59,130,246,.25); }
-    .chip-gray   { background: rgba(100,116,139,.15); color: #94a3b8; border: 1px solid rgba(100,116,139,.25); }
-    .chip-purple { background: rgba(168,85,247,.15);  color: #d8b4fe; border: 1px solid rgba(168,85,247,.25); }
-    .chip-cyan   { background: rgba(6,182,212,.15);   color: #67e8f9; border: 1px solid rgba(6,182,212,.25); }
+    .chip-green  { background: rgba(14,165,114,.12); color: #34d399; border: 1px solid rgba(14,165,114,.22); }
+    .chip-amber  { background: rgba(224,150,40,.12); color: #f6c44e; border: 1px solid rgba(224,150,40,.22); }
+    .chip-red    { background: rgba(229,62,62,.12);  color: #f87171; border: 1px solid rgba(229,62,62,.22); }
+    .chip-blue   { background: rgba(52,113,245,.12); color: #93c5fd; border: 1px solid rgba(52,113,245,.22); }
+    .chip-gray   { background: rgba(80,107,135,.12); color: var(--text-soft); border: 1px solid rgba(80,107,135,.22); }
+    .chip-purple { background: rgba(159,95,234,.12); color: #c4b5fd; border: 1px solid rgba(159,95,234,.22); }
+    .chip-cyan   { background: rgba(6,182,212,.12);  color: #67e8f9; border: 1px solid rgba(6,182,212,.22); }
 
-    .num-val { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--text); }
+    .num-val { font-family: var(--font-data); font-variant-numeric: tabular-nums; font-weight: 500; font-size: 12px; color: var(--text); }
     .num-val.large { color: var(--green); }
 
     /* ── PAGINATION ─────────────────────────────────── */
@@ -659,14 +661,87 @@
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
+    /* ── RESUMO PANEL ───────────────────────────────── */
+    #resumoPanel {
+      padding: 28px 32px 48px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    .resumo-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin: 28px 0 12px;
+    }
+    .resumo-section-label:first-child { margin-top: 0; }
+    .resumo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .resumo-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: border-color .2s;
+    }
+    .resumo-card:hover { border-color: var(--primary); }
+    .resumo-card-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 6px;
+    }
+    .resumo-card-count {
+      font-family: var(--font-data);
+      font-size: 22px;
+      font-weight: 500;
+      line-height: 1;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .resumo-card-value {
+      font-family: var(--font-data);
+      font-size: 15px;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      margin-top: 4px;
+    }
+    .resumo-card-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .resumo-card.blue   .resumo-card-count { color: var(--primary); }
+    .resumo-card.green  .resumo-card-count { color: var(--green); }
+    .resumo-card.amber  .resumo-card-count { color: var(--amber); }
+    .resumo-card.purple .resumo-card-count { color: var(--purple); }
+    .resumo-card.red    .resumo-card-count { color: var(--red); }
+    .resumo-card.muted  .resumo-card-count { color: var(--text-soft); }
+    .resumo-card-value { color: var(--text-muted) !important; font-size: 12px !important; font-weight: 400 !important; }
+    .resumo-card.blue  { border-left: 3px solid var(--primary); }
+    .resumo-card.green { border-left: 3px solid var(--green); }
+    .resumo-card.amber { border-left: 3px solid var(--amber); }
+    .resumo-card.purple { border-left: 3px solid var(--purple); }
+    .resumo-card.red   { border-left: 3px solid var(--red); }
+    .resumo-card.muted { border-left: 3px solid var(--text-muted); }
+
     /* ── TAB NAVIGATION ─────────────────────────────── */
     .tab-nav {
-      background: linear-gradient(135deg, #0a1628 0%, #0e2040 100%);
+      background: linear-gradient(160deg, #08142a 0%, #0c1e40 60%, #0d2248 100%);
       border-bottom: 2px solid var(--border);
       padding: 0 32px;
       display: flex;
       align-items: flex-end;
-      gap: 4px;
+      gap: 2px;
       position: sticky;
       top: 68px;
       z-index: 999;
@@ -675,37 +750,39 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 12px 24px 10px;
+      padding: 13px 22px 11px;
       border: 1px solid transparent;
       border-bottom: none;
       border-radius: 10px 10px 0 0;
       background: transparent;
       color: var(--text-muted);
       font-family: 'Inter', sans-serif;
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
-      letter-spacing: .01em;
+      transition: color .18s, background .18s;
+      letter-spacing: .02em;
       white-space: nowrap;
     }
-    .tab-btn:hover { color: var(--text); background: rgba(255,255,255,.04); }
+    .tab-btn:hover { color: var(--text-soft); background: rgba(255,255,255,.04); }
     .tab-btn.active {
-      color: var(--primary);
+      color: var(--text);
       background: var(--bg);
       border-color: var(--border);
       border-bottom-color: var(--bg);
       margin-bottom: -2px;
+      box-shadow: inset 0 2px 0 var(--primary);
     }
     .tab-badge {
+      font-family: var(--font-data);
       font-size: 10px;
-      font-weight: 700;
+      font-weight: 500;
       padding: 1px 7px;
       border-radius: 10px;
-      background: rgba(59,130,246,.15);
-      color: #60a5fa;
+      background: rgba(52,113,245,.15);
+      color: var(--text-soft);
     }
-    .tab-btn.active .tab-badge { background: rgba(59,130,246,.2); color: var(--primary); }
+    .tab-btn.active .tab-badge { background: rgba(52,113,245,.2); color: var(--primary); }
 
     .table-scroll { overflow-x: auto; }
 
@@ -828,8 +905,8 @@
     .sales-group-hdr.g-amber { background: rgba(245,158,11,.06); border-color: rgba(245,158,11,.28); }
     .sales-group-hdr.g-blue  { background: rgba(59,130,246,.06); border-color: rgba(59,130,246,.28); }
     .sg-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
-    .g-green .sg-dot { background:var(--green); box-shadow:0 0 7px rgba(16,185,129,.6); }
-    .g-amber .sg-dot { background:var(--amber); box-shadow:0 0 7px rgba(245,158,11,.6); }
+    .g-green .sg-dot { background:var(--green); box-shadow:0 0 8px rgba(14,165,114,.55); }
+    .g-amber .sg-dot { background:var(--amber); box-shadow:0 0 8px rgba(224,150,40,.55); }
     .g-blue  .sg-dot { background:var(--primary); box-shadow:0 0 7px rgba(59,130,246,.6); }
     .sg-text { flex: 1; min-width: 0; }
     .sg-title { font-size:13px; font-weight:700; color:var(--text); }
@@ -886,6 +963,9 @@
     🏙️ Cozac
     <span class="tab-badge" id="tabBadgeCozac">—</span>
   </button>
+  <button class="tab-btn" id="tabResumo" onclick="switchTab('resumo')">
+    📊 Resumo
+  </button>
 </div>
 
 <main>
@@ -909,6 +989,18 @@
       <div class="kpi-value" id="kpiPropostas">—</div>
       <div class="kpi-label">Soma das Propostas</div>
       <div class="kpi-sub">Total em propostas recebidas</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-icon">⚠️</div>
+      <div class="kpi-value" id="kpiPropostaAcimaVF">—</div>
+      <div class="kpi-label">Proposta &gt; VF</div>
+      <div class="kpi-sub" id="kpiPropostaAcimaVFCount">0 im&oacute;veis</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-icon">📈</div>
+      <div class="kpi-value" id="kpiPropostaAcimaVM">—</div>
+      <div class="kpi-label">Proposta &gt; VM</div>
+      <div class="kpi-sub" id="kpiPropostaAcimaVMCount">0 im&oacute;veis</div>
     </div>
   </div>
 
@@ -1163,6 +1255,80 @@
 
 </main>
 
+<!-- PAINEL RESUMO -->
+<div id="resumoPanel" style="display:none">
+  <div class="resumo-section-label">Carteira Total</div>
+  <div class="resumo-grid">
+    <div class="resumo-card blue">
+      <div class="resumo-card-label">Total de Imóveis</div>
+      <div class="resumo-card-count" id="resTotalVF">—</div>
+      <div class="resumo-card-value" id="resTotalN">—</div>
+      <div class="resumo-card-sub">Valor Venda Forçada</div>
+    </div>
+    <div class="resumo-card green">
+      <div class="resumo-card-label">Imóveis Vendidos</div>
+      <div class="resumo-card-count" id="resVendidosVal">—</div>
+      <div class="resumo-card-value" id="resVendidosN">—</div>
+      <div class="resumo-card-sub">Valor da Venda</div>
+    </div>
+    <div class="resumo-card amber">
+      <div class="resumo-card-label">Imóveis a Vender</div>
+      <div class="resumo-card-count" id="resAVenderVF">—</div>
+      <div class="resumo-card-value" id="resAVenderN">—</div>
+      <div class="resumo-card-sub">Valor Venda Forçada</div>
+    </div>
+  </div>
+
+  <div class="resumo-section-label">Imóveis Não Vendidos</div>
+  <div class="resumo-grid">
+    <div class="resumo-card purple">
+      <div class="resumo-card-label">Com Proposta</div>
+      <div class="resumo-card-count" id="resComPropostaVal">—</div>
+      <div class="resumo-card-value" id="resComPropostaN">—</div>
+      <div class="resumo-card-sub">Valor das Propostas</div>
+    </div>
+    <div class="resumo-card muted">
+      <div class="resumo-card-label">Sem Proposta</div>
+      <div class="resumo-card-count" id="resSemPropostaVF">—</div>
+      <div class="resumo-card-value" id="resSemPropostaN">—</div>
+      <div class="resumo-card-sub">Valor Venda Forçada</div>
+    </div>
+  </div>
+
+  <div class="resumo-section-label">Detalhamento dos Vendidos</div>
+  <div class="resumo-grid">
+    <div class="resumo-card green">
+      <div class="resumo-card-label">Quitados</div>
+      <div class="resumo-card-count" id="resQuitadosVal">—</div>
+      <div class="resumo-card-value" id="resQuitadosN">—</div>
+      <div class="resumo-card-sub">Valor total</div>
+    </div>
+    <div class="resumo-card red">
+      <div class="resumo-card-label">A Receber</div>
+      <div class="resumo-card-count" id="resAReceberVal">—</div>
+      <div class="resumo-card-sub">Remanescente pendente</div>
+    </div>
+    <div class="resumo-card blue">
+      <div class="resumo-card-label">Valor Recebido</div>
+      <div class="resumo-card-count" id="resRecebidoVal">—</div>
+      <div class="resumo-card-sub">Total já recebido</div>
+    </div>
+  </div>
+
+  <div class="resumo-section-label">Propostas vs. Avalia&ccedil;&atilde;o</div>
+  <div class="card" style="margin-bottom:24px;background:var(--surface1)" id="propostaCompareSection">
+    <div class="card-header">
+      <span class="card-title">🤝 VF vs. Proposta &mdash; todos os im&oacute;veis</span>
+      <div style="display:flex;gap:12px;font-size:11px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+        <span style="display:flex;align-items:center;gap:4px;color:var(--text-soft)"><div style="width:10px;height:4px;background:var(--accent);border-radius:2px"></div>VF</span>
+        <span style="display:flex;align-items:center;gap:4px;color:var(--text-soft)"><div style="width:10px;height:4px;background:#22c55e;border-radius:2px"></div>Proposta &gt; VF</span>
+        <span style="display:flex;align-items:center;gap:4px;color:var(--text-soft)"><div style="width:10px;height:4px;background:#ef4444;border-radius:2px"></div>Proposta &lt; VF</span>
+      </div>
+    </div>
+    <div class="compare-row compare-grid" id="propostaCompareList"></div>
+  </div>
+</div>
+
 <!-- MODAL: Cadastrar / Editar Proposta -->
 <div class="modal-overlay" id="modalProposta">
   <div class="modal-box" style="max-width:680px">
@@ -1416,13 +1582,28 @@ const CITY_COORDS = {
 // ── TAB SWITCH ────────────────────────────────────────────────────────
 function switchTab(tab) {
   activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab' + tab[0].toUpperCase() + tab.slice(1)).classList.add('active');
+
+  if (tab === 'resumo') {
+    document.querySelector('main').style.display = 'none';
+    document.getElementById('resumoPanel').style.display = '';
+    const btn = document.getElementById('importBtn');
+    if (btn) btn.style.display = 'none';
+    renderResumo();
+    return;
+  }
+
+  document.querySelector('main').style.display = '';
+  document.getElementById('resumoPanel').style.display = 'none';
+  const btn = document.getElementById('importBtn');
+  if (btn) {
+    btn.style.display = '';
+    btn.textContent = '📂 Importar ' + (tab === 'cotia' ? 'Cotia' : 'Cozac');
+  }
   PROPERTIES = tab === 'cotia' ? PROPERTIES_COTIA : PROPERTIES_COZAC;
   FLUXO      = tab === 'cotia' ? FLUXO_COTIA      : FLUXO_COZAC;
   PROPOSTAS  = tab === 'cotia' ? PROPOSTAS_COTIA   : PROPOSTAS_COZAC;
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab' + tab[0].toUpperCase() + tab.slice(1)).classList.add('active');
-  const btn = document.getElementById('importBtn');
-  if (btn) btn.textContent = '📂 Importar ' + (tab === 'cotia' ? 'Cotia' : 'Cozac');
   renderAll();
 }
 
@@ -1462,11 +1643,13 @@ async function autoLoadFiles() {
   PROPERTIES = PROPERTIES_COTIA;
   updateTabBadges();
   renderAll();
+  if (activeTab === 'resumo') renderResumo();
 }
 
 // ── KPIs ──────────────────────────────────────────────────────────────
 let totalVM, totalVF, totalPropostas, loc, partLoc, nLoc, rural, urbano, total;
 let vendidos, naoVendidos, qtdVendidos, totalVendido, totalRecebido, vmNaoVendido, vfNaoVendido, totalTabelaGI, saldoVF;
+let propostaAcimaVF, propostaAcimaVM;
 
 function computeKPIs() {
   totalVM       = PROPERTIES.reduce((a,b) => a + (b.vm||0), 0);
@@ -1513,8 +1696,68 @@ function computeKPIs() {
 
   // Saldo: VF Total − VF dos Vendidos = VF dos Não Vendidos (= vfNaoVendido)
   saldoVF = totalVF - vfVendidos;
+
+  const comProposta = PROPERTIES.filter(p => p.proposta > 0);
+  propostaAcimaVF   = comProposta.filter(p => p.vf > 0 && p.proposta > p.vf);
+  propostaAcimaVM   = comProposta.filter(p => p.vm > 0 && p.proposta > p.vm);
 }
 computeKPIs();
+
+function renderResumo() {
+  const normMat = (s) => String(s).trim().replace(/\./g, '');
+  const fluxoMap = {};
+  [...FLUXO_COTIA.linhas, ...FLUXO_COZAC.linhas].forEach(l => {
+    l.mat.split(/,|\s+[Ee]\s+/).forEach(m => {
+      const k = normMat(m);
+      if (k) fluxoMap[k] = l;
+    });
+  });
+  const getFluxo = (mat) => fluxoMap[normMat(mat)] || null;
+
+  const isVend = (p) => (p.statusVenda || '').trim().toLowerCase() === 'vendido';
+  const isProp = (p) => {
+    const sv = (p.statusVenda || '').trim().toLowerCase();
+    return sv === 'proposta em negociação' || sv === 'proposta em fase de minuta';
+  };
+  const isQuit = (p) => {
+    const fl = getFluxo(p.mat);
+    return isVend(p) && (!fl || !(fl.remanescente > 0 || fl.pendente));
+  };
+  const valorVenda = (p) => {
+    const fl = getFluxo(p.mat);
+    return (fl && fl.valorVenda) || p.valorVendaTotal || p.proposta || 0;
+  };
+
+  const all = [...PROPERTIES_COTIA, ...PROPERTIES_COZAC];
+  const vendidosList = all.filter(isVend);
+  const aVenderList  = all.filter(p => !isVend(p));
+  const comPropList  = all.filter(isProp);
+  const semPropList  = all.filter(p => !isVend(p) && !isProp(p));
+  const quitList     = vendidosList.filter(isQuit);
+  const aQuitarList  = vendidosList.filter(p => !isQuit(p));
+
+  const sum = (arr, fn) => arr.reduce((s, p) => s + fn(p), 0);
+  const fmtN = (n) => n + ' imóve' + (n === 1 ? 'l' : 'is');
+  const set  = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+
+  set('resTotalN',        fmtN(all.length));
+  set('resTotalVF',       fmt(sum(all, p => p.vf || 0)));
+  set('resVendidosN',     fmtN(vendidosList.length));
+  set('resVendidosVal',   fmt(sum(vendidosList, valorVenda)));
+  set('resAVenderN',      fmtN(aVenderList.length));
+  set('resAVenderVF',     fmt(sum(aVenderList, p => p.vf || 0)));
+  set('resComPropostaN',  fmtN(comPropList.length));
+  set('resComPropostaVal',fmt(sum(comPropList, p => p.proposta || 0)));
+  set('resSemPropostaN',  fmtN(semPropList.length));
+  set('resSemPropostaVF', fmt(sum(semPropList, p => p.vf || 0)));
+  set('resQuitadosN',     fmtN(quitList.length));
+  set('resQuitadosVal',   fmt(sum(quitList, valorVenda)));
+  set('resAQuitarN',      fmtN(aQuitarList.length));
+  set('resAQuitarVal',    fmt(sum(aQuitarList, valorVenda)));
+  set('resRecebidoVal',   fmt(FLUXO_COTIA.totalRecebido + FLUXO_COZAC.totalRecebido));
+  set('resAReceberVal',   fmt(FLUXO_COTIA.totalRemanescente + FLUXO_COZAC.totalRemanescente));
+  renderPropostaCompare();
+}
 
 // Animated counter
 function animCount(el, target, prefix='', decimals=0) {
@@ -1558,6 +1801,13 @@ function renderKPIs() {
 
 
   document.getElementById('liveCount').textContent = total;
+
+  const totalAcimaVF = propostaAcimaVF.reduce((a, b) => a + b.proposta, 0);
+  const totalAcimaVM = propostaAcimaVM.reduce((a, b) => a + b.proposta, 0);
+  document.getElementById('kpiPropostaAcimaVF').textContent = fmt(totalAcimaVF);
+  document.getElementById('kpiPropostaAcimaVFCount').textContent = propostaAcimaVF.length + ' imóvel(is)';
+  document.getElementById('kpiPropostaAcimaVM').textContent = fmt(totalAcimaVM);
+  document.getElementById('kpiPropostaAcimaVMCount').textContent = propostaAcimaVM.length + ' imóvel(is)';
 }
 
 function reorderDashboardSections() {
@@ -1789,6 +2039,59 @@ function initCharts() {
 }
 
 // ── COMPARE BARS ──────────────────────────────────────────────────────
+function renderPropostaCompare() {
+  const section   = document.getElementById('propostaCompareSection');
+  const container = document.getElementById('propostaCompareList');
+  if (!section || !container) return;
+
+  const all = [...PROPERTIES_COTIA, ...PROPERTIES_COZAC]
+    .filter(p => p.proposta > 0)
+    .sort((a, b) => b.proposta - a.proposta);
+
+  if (!all.length) { section.style.display = 'none'; return; }
+  section.style.display = '';
+
+  const maxVal = Math.max(...all.map(p => Math.max(p.vf || 0, p.proposta || 0)));
+
+  container.innerHTML = all.map(p => {
+    const vfPct  = ((p.vf      || 0) / maxVal * 100).toFixed(1);
+    const proPct = ((p.proposta || 0) / maxVal * 100).toFixed(1);
+    const hasPro = p.proposta > 0;
+
+    const proColor = p.proposta > p.vf ? '#22c55e' : '#ef4444';
+    const badge = !hasPro ? ''
+      : p.proposta > p.vf
+        ? `<span style="color:#22c55e;font-size:10px;font-weight:700">&nbsp;▲ VF</span>`
+        : `<span style="color:#ef4444;font-size:10px;font-weight:700">&nbsp;▼ VF</span>`;
+
+    const proRow = hasPro ? `
+        <div class="cmp-bars" style="margin-top:2px;">
+          <div style="width:${proPct}%;flex-shrink:0;height:100%;background:${proColor};border-radius:3px"></div>
+          <div style="flex:1;background:var(--surface2)"></div>
+        </div>` : '';
+
+    const proLabel = hasPro
+      ? `<span><span style="color:${proColor};font-size:10px">Prop${badge}</span> ${fmt(p.proposta)}</span>`
+      : '';
+
+    return `
+      <div class="cmp-item">
+        <div class="cmp-header">
+          <span class="cmp-city">${p.mat} &mdash; ${p.tipologia}, ${p.cidade}</span>
+          <span class="cmp-values" style="display:flex;flex-direction:column;align-items:flex-end;gap:1px">
+            <span><span style="color:var(--accent);font-size:10px">VF</span> ${fmt(p.vf)}</span>
+            ${proLabel}
+          </span>
+        </div>
+        <div class="cmp-bars">
+          <div class="cmp-vf" style="width:${vfPct}%;flex-shrink:0"></div>
+          <div style="flex:1;background:var(--surface2)"></div>
+        </div>
+        ${proRow}
+      </div>`;
+  }).join('');
+}
+
 function renderCompare() {
   const tipoFilter = document.getElementById('compareTipoFilter')?.value || '';
   const all = [...PROPERTIES].filter(p => (!tipoFilter || p.tipo === tipoFilter) && (p.vm > 0 || p.vf > 0 || parseNum(p.tabelaGI) > 0))
